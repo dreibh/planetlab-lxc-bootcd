@@ -241,7 +241,7 @@ function build_overlay () {
     MEMTESTER=`find /boot -maxdepth 1 -name "memtest86*" | tail -n1`
     cp "/usr/share/syslinux/vesamenu.c32" "${BUILDTMP}/isofs" \
         || cp "/usr/lib/syslinux/vesamenu.c32" "${BUILDTMP}/isofs"
-    cp "${MEMTESTER}" "${BUILDTMP}/isofs"
+    cp "${MEMTESTER}" "${BUILDTMP}/isofs/memtest"
     cp "splash.jpg" "${BUILDTMP}/isofs"
     # #####################################
     ISOFS="${BUILDTMP}/isofs"
@@ -394,11 +394,10 @@ TIMEOUT 40
 EOF
 
     # ###### NorNet customisation ###########################################
-    MEMTESTER=`find $ISOFS/ -maxdepth 1 -name "memtest86*" -printf "%f\n" | tail -n1`
     cat >$ISOFS/isolinux.cfg <<EOF
 ${console_serial_line}
 default vesamenu.c32
-timeout 10
+timeout 300
 
 menu resolution 1024 768
 menu background splash.jpg
@@ -427,7 +426,7 @@ label kernel-std
 
 label memtest86
   menu label ^Memory Tester
-  kernel ${MEMTESTER}
+  kernel memtest
   append -
 EOF
     # #######################################################################
