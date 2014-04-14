@@ -237,6 +237,12 @@ function build_overlay () {
     # the syslinux that comes with f12 has this file in a new location
     cp "/usr/lib/syslinux/isolinux.bin" "${BUILDTMP}/isofs" \
 	|| cp "/usr/share/syslinux/isolinux.bin" "${BUILDTMP}/isofs" 
+    # ##### NorNet ########################
+    cp "/usr/lib/syslinux/vesamenu.c32" "${BUILDTMP}/isofs" \
+        || cp "/usr/share/syslinux/vesamenu.c32" "${BUILDTMP}/isofs"
+    cp "/boot/memtest86+*" "${BUILDTMP}/isofs"
+    cp "splash.jpg" "${BUILDTMP}/isofs"
+    # ##### NorNet ########################
     ISOFS="${BUILDTMP}/isofs"
 
     # Root of the ISO and USB images
@@ -385,6 +391,45 @@ DISPLAY pl_version
 PROMPT 0
 TIMEOUT 40
 EOF
+
+    # ###### NorNet customisation ###########################################
+    MEMTESTER=`find $ISOFS/ -maxdepth 1 -name "memtest86*" -printf "%f\n" | tail -n1`
+    cat >$ISOFS/isolinux.cfg <<EOF
+${console_serial_line}
+default vesamenu.c32
+timeout 10
+
+menu resolution 1024 768
+menu background splash.jpg
+menu rows 5
+
+menu title -- Welcome to NorNet! --
+menu color border    0 #ffffffff #00000000
+menu color sel       7 #ffffffff #ff000000
+menu color title     0 #ffffffff #00000000
+menu color tabmsg    0 #ffffffff #00000000
+menu color unsel     0 #ffffffff #00000000
+menu color hotsel    0 #ff000000 #ffffffff
+menu color hotkey    7 #ffffffff #ff000000
+menu color scrollbar 0 #ffffffff #00000000
+
+label kernel-vesa
+  menu label ^Boot NorNet Research Node (1024x768)
+  menu default
+  kernel kernel
+  append ramdisk_size=$ramdisk_size initrd=bootcd.img,overlay.img${custom:+,custom.img} root=/dev/ram0 rw ${KERNEL_ARGS} vga=792
+
+label kernel-std
+  menu label Boot NorNet Research Node (default resolution)
+  kernel kernel
+  append ramdisk_size=$ramdisk_size initrd=bootcd.img,overlay.img${custom:+,custom.img} root=/dev/ram0 rw ${KERNEL_ARGS}
+
+label memtest86
+  menu label ^Memory Tester
+  kernel ${MEMTESTER}
+  append -
+EOF
+    # #######################################################################
 
     # Create ISO image
     echo "* Creating ISO image"

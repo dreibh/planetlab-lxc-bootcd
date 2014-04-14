@@ -28,7 +28,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 # other archs must be able to install this
 BuildArch: noarch
 
-Requires: dosfstools, mkisofs, gzip, mtools, syslinux
+Requires: dosfstools, mkisofs, gzip, mtools, syslinux, memtest86+
 # yumdownloader is needed in bootcd-kernel
 Requires: yum-utils
 # mkdiskimage is used for USB-partitioned mode
