@@ -236,10 +236,10 @@ function build_overlay () {
     done
     # the syslinux that comes with f12 has this file in a new location
     cp "/usr/share/syslinux/isolinux.bin" "${BUILDTMP}/isofs" \
-	|| cp "/usr/lib/syslinux/isolinux.bin" "${BUILDTMP}/isofs" 
+        || cp "/usr/lib/syslinux/isolinux.bin" "${BUILDTMP}/isofs"
     # ##### NorNet ########################
     MEMTESTER=`find /boot -maxdepth 1 -name "memtest86*" | tail -n1`
-    cp "/usr/share/syslinux/vesamenu.c32" "${BUILDTMP}/isofs" \
+    cp "/usr/share/syslinux/vesamenu.c32" "${BUILDTMP}/isofs" \ 
         || cp "/usr/lib/syslinux/vesamenu.c32" "${BUILDTMP}/isofs"
     cp "${MEMTESTER}" "${BUILDTMP}/isofs"
     cp "splash.jpg" "${BUILDTMP}/isofs"
