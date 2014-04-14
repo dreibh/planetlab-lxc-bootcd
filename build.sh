@@ -235,14 +235,15 @@ function build_overlay () {
 	ln -s "$i" "${BUILDTMP}/isofs"
     done
     # the syslinux that comes with f12 has this file in a new location
-    cp "/usr/lib/syslinux/isolinux.bin" "${BUILDTMP}/isofs" \
-	|| cp "/usr/share/syslinux/isolinux.bin" "${BUILDTMP}/isofs" 
+    cp "/usr/share/syslinux/isolinux.bin" "${BUILDTMP}/isofs" \
+	|| cp "/usr/lib/syslinux/isolinux.bin" "${BUILDTMP}/isofs" 
     # ##### NorNet ########################
-    cp "/usr/lib/syslinux/vesamenu.c32" "${BUILDTMP}/isofs" \
-        || cp "/usr/share/syslinux/vesamenu.c32" "${BUILDTMP}/isofs"
-    cp "/boot/memtest86+*" "${BUILDTMP}/isofs"
+    MEMTESTER=`find /boot -maxdepth 1 -name "memtest86*" | tail -n1`
+    cp "/usr/share/syslinux/vesamenu.c32" "${BUILDTMP}/isofs" \
+        || cp "/usr/lib/syslinux/vesamenu.c32" "${BUILDTMP}/isofs"
+    cp "${MEMTESTER}" "${BUILDTMP}/isofs"
     cp "splash.jpg" "${BUILDTMP}/isofs"
-    # ##### NorNet ########################
+    # #####################################
     ISOFS="${BUILDTMP}/isofs"
 
     # Root of the ISO and USB images
