@@ -7,6 +7,8 @@
 # Mark Huang <mlhuang@cs.princeton.edu>
 # Copyright (C) 2004-2007 The Trustees of Princeton University
 #
+# Jan 2015 - f21 comes with isolinux 6.03 (was 4.05 in f20)
+# http://www.syslinux.org/wiki/index.php/ISOLINUX
 
 COMMAND=$(basename $0)
 DIRNAME=$(dirname $0)
@@ -15,13 +17,8 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 # debugging flags
 # keep KERNEL_DEBUG_ARGS void for production
 KERNEL_DEBUG_ARGS=""
-# and uncomment these to augment verbosity of boot phase
-# not everything works or is helpful, but well
-#KERNEL_DEBUG_ARGS="$KERNEL_DEBUG_ARGS debuginitrd showerr"
-#KERNEL_DEBUG_ARGS="$KERNEL_DEBUG_ARGS earlyprintk=vga loglevel=6"
-# for systemd - might slow down boot 
-#KERNEL_DEBUG_ARGS="$KERNEL_DEBUG_ARGS systemd.log_level=debug systemd.journald.forward_to_console=1"
-
+# uncomment this to augment verbosity of boot phase
+#KERNEL_DEBUG_ARGS="$KERNEL_DEBUG_ARGS systemd.log_level=debug"
 
 # defaults
 DEFAULT_TYPES="usb iso"
@@ -30,9 +27,10 @@ GRAPHIC_CONSOLE="graphic"
 SERIAL_CONSOLE="ttyS0:115200:n:8"
 CONSOLE_INFO=$GRAPHIC_CONSOLE
 MKISOFS_OPTS="-R -J -r -f -b isolinux.bin -c boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table"
-#isolinux-debug.bin is supposedly helpful as well if available,
+# isolinux-debug.bin is supposedly helpful as well if available,
 # when things don't work as expected
 #MKISOFS_OPTS="-R -J -r -f -b isolinux-debug.bin -c boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table"
+
 FREE_SPACE=4096
 
 # command-line settable args
@@ -250,7 +248,7 @@ function build_overlay () {
     # use new location as of fedora 12
     # used to be in /usr/lib/syslinux/isolinux.bin
     # removed backward compat in jan. 2015
-    # as of syslinux 5.0 (fedora 21) ldlinux.c32 is required by isolinux.bin
+    # as of syslinux 6.05 (fedora 21) ldlinux.c32 is required by isolinux.bin
     # the debug version can come in handy at times, and is 40k as well
     isolinuxdir="/usr/share/syslinux"
     isolinuxfiles="isolinux.bin ldlinux.c32 isolinux-debug.bin memdisk"
@@ -369,11 +367,8 @@ EOF
     KERNEL_ARGS="$KERNEL_ARGS biosdevname=0"
     # making sure selinux is turned off - somehow this is needed with lxc/f14
     KERNEL_ARGS="$KERNEL_ARGS selinux=0"
-# cannot use this mecahnism to set systemd default target because this applies to kexec boots as well
-#    # set default target for systemd
-#    KERNEL_ARGS="$KERNEL_ARGS systemd.unit=pl_boot.target"
-    # output more systemd-related messages on the console
-    KERNEL_ARGS="$KERNEL_ARGS systemd.log_target=console"
+    # output systemd-related messages on the serial line so it gets with log.txt
+    KERNEL_ARGS="$KERNEL_ARGS systemd.log_target=console console=ttyS0,115200"
     # add any debug flag if any (defined in the header of this script)
     KERNEL_ARGS="$KERNEL_ARGS $KERNEL_DEBUG_ARGS"
     # propagate kernel args for later boot stages
@@ -408,11 +403,13 @@ function build_iso() {
     # Write isolinux configuration
     cat >$ISOFS/isolinux.cfg <<EOF
 ${console_serial_line}
-DEFAULT kernel
-APPEND ramdisk_size=$ramdisk_size initrd=bootcd.img,overlay.img${custom:+,custom.img} root=/dev/ram0 rw ${KERNEL_ARGS}
-DISPLAY pl_version
 PROMPT 0
-TIMEOUT 40
+DEFAULT planetlab-bootcd
+
+LABEL planetlab-bootcd
+  DISPLAY pl_version
+  LINUX kernel
+  APPEND ramdisk_size=$ramdisk_size initrd=bootcd.img,overlay.img${custom:+,custom.img} root=/dev/ram0 rw ${KERNEL_ARGS}
 EOF
 
     # ###### NorNet customisation ###########################################
@@ -499,11 +496,13 @@ EOF
     tmp="${BUILDTMP}/syslinux.cfg"
     cat >$tmp <<EOF
 ${console_serial_line}
-DEFAULT kernel
-APPEND ramdisk_size=$ramdisk_size initrd=bootcd.img,overlay.img${custom:+,custom.img} root=/dev/ram0 rw ${KERNEL_ARGS}
-DISPLAY pl_version
 PROMPT 0
-TIMEOUT 40
+DEFAULT planetlab-bootcd
+
+LABEL planetlab-bootcd
+  DISPLAY pl_version
+  LINUX kernel
+  APPEND ramdisk_size=$ramdisk_size initrd=bootcd.img,overlay.img${custom:+,custom.img} root=/dev/ram0 rw ${KERNEL_ARGS}
 EOF
     mdel -i "$usb" z:/isolinux.cfg 2>/dev/null || :
     mcopy -i "$usb" "$tmp" z:/syslinux.cfg
@@ -539,11 +538,13 @@ EOF
     tmp="${BUILDTMP}/syslinux.cfg"
     cat >$tmp <<EOF
 ${console_serial_line}
-DEFAULT kernel
-APPEND ramdisk_size=$ramdisk_size initrd=bootcd.img,overlay.img${custom:+,custom.img} root=/dev/ram0 rw ${KERNEL_ARGS}
-DISPLAY pl_version
 PROMPT 0
-TIMEOUT 40
+DEFAULT planetlab-bootcd
+
+LABEL planetlab-bootcd
+  DISPLAY pl_version
+  LINUX kernel
+  APPEND ramdisk_size=$ramdisk_size initrd=bootcd.img,overlay.img${custom:+,custom.img} root=/dev/ram0 rw ${KERNEL_ARGS}
 EOF
     mdel -i "$usb" ::/isolinux.cfg 2>/dev/null || :
     mcopy -i "$usb" "$tmp" ::/syslinux.cfg
@@ -701,11 +702,13 @@ function build_iso_cramfs() {
     (cd $ISOFS && find . | grep -v "\.img$" | cpio -p -d -u $tmp/)
     cat >$tmp/isolinux.cfg <<EOF
 ${console_serial_line}
-DEFAULT kernel
-APPEND ramdisk_size=$cramfs_size initrd=cramfs.img root=/dev/ram0 ro ${KERNEL_ARGS}
-DISPLAY pl_version
 PROMPT 0
-TIMEOUT 40
+DEFAULT planetlab-bootcd
+
+LABEL planetlab-bootcd
+  DISPLAY pl_version
+  LINUX kernel
+  APPEND ramdisk_size=$ramdisk_size initrd=cramfs.img root=/dev/ram0 rw ${KERNEL_ARGS}
 EOF
 
     cp ${BUILDTMP}/cramfs.img $tmp
@@ -739,11 +742,13 @@ function build_usb_cramfs() {
     tmp="${BUILDTMP}/syslinux.cfg"
     cat >$tmp <<EOF
 ${console_serial_line}
-DEFAULT kernel
-APPEND ramdisk_size=$cramfs_size initrd=cramfs.img root=/dev/ram0 ro ${KERNEL_ARGS}
-DISPLAY pl_version
 PROMPT 0
-TIMEOUT 40
+DEFAULT planetlab-bootcd
+
+LABEL planetlab-bootcd
+  DISPLAY pl_version
+  LINUX kernel
+  APPEND ramdisk_size=$ramdisk_size initrd=cramfs.img root=/dev/ram0 rw ${KERNEL_ARGS}
 EOF
 
     mcopy -bsQ -i "$usb" "$tmp" ::/syslinux.cfg
@@ -803,7 +808,7 @@ function main () {
 
     init_and_check
 
-    echo "* Building images for $FULL_VERSION_STRING"
+    echo "* Building bootcd images for $NODE_CONFIGURATION_FILE ($FULL_VERSION_STRING) - $(date +%H-%M:%S)"
     # Do not tolerate errors
     set -e
     trap "do_cleanup" ERR INT EXIT
@@ -812,6 +817,7 @@ function main () {
     build_overlay
     build_types
 
+    echo "* Done with bootcd images for $NODE_CONFIGURATION_FILE - $(date +%H-%M:%S)"
     exit 0
 }
 
