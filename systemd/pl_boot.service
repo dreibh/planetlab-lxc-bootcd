@@ -1,8 +1,11 @@
 [Unit]
 Description=pl_boot service
-Requires=network-online.target
-After=network-online.target
+Wants=network-online.target
+After=network.target
 
+# in debug mode we fork bash -x so that we can get a grip on
+# what exactly is going on in here
 [Service]
-ExecStart=/etc/init.d/pl_wrapper
+ExecStart=/etc/init.d/pl_sysinit
+ExecStart=/etc/init.d/pl_boot
 Type=oneshot

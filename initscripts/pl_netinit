@@ -1,6 +1,8 @@
 #!/bin/sh
 #-*-shell-script-*-
 
+set -x
+
 # the name of the floppy based network configuration
 # files (checked first). the name planet.cnf is kept
 # for backward compatibility with old nodes, and only
@@ -59,6 +61,17 @@ DEFAULT_NET_CONF=0
 function net_init_failed() {
     echo
     echo $(date "+%H:%M:%S") " pl_netinit: network initialization failed,"
+    echo
+    echo For forensics
+    echo
+    echo ========== lspci beg
+    /sbin/lspci -n | /bin/grep "Class 0200"    
+    echo ========== lspci end
+    echo
+    echo ========== ifconfig beg
+    /sbin/ifconfig
+    echo ========== ifconfig end
+    echo 
     echo $(date "+%H:%M:%S") " pl_netinit: shutting down machine in two hours"
     /bin/sleep 2h
     /sbin/shutdown -h now
@@ -283,20 +296,38 @@ if [[ -z "$ETH_DEVICE" ]]; then
     net_init_failed
 fi
 
+# within a systemd-driven startup, we often see this stage
+# triggered before the network interface is actually exposed
+# by udev/kernel
+# although of course we have network-online.target
+# as a requirement; go figure what systemd actually does..
+
+# in any case, let us try to work around that by allowing some delay
+# here
+
+ALLOW=5
+COUNTER=0
+while true; do
+    if /sbin/ifconfig $ETH_DEVICE >& /dev/null; then
+	echo "pl_netinit: device present $ETH_DEVICE, proceeding (${COUNTER}s/${ALLOW}s)"
+	break
+    fi
+    echo $(date "+%H:%M:%S") " pl_netinit: waiting for device $ETH_DEVICE,${COUNTER}s/${ALLOW}s"
+    COUNTER=$(($COUNTER+1))
+    [ $COUNTER -ge $ALLOW ] && net_init_failed
+    sleep 1
+done
+
 
 # actually check to make sure ifconfig <device> succeeds
-/sbin/ifconfig $ETH_DEVICE up 2>&1 > /dev/null
-if [[ $? -ne 0 ]]; then
+
+/sbin/ifconfig $ETH_DEVICE up 2>&1 > /dev/null || {
     echo $(date "+%H:%M:%S") " pl_netinit: device $ETH_DEVICE does not exist, most likely"
     echo $(date "+%H:%M:%S") " pl_netinit: this CD does not have hardware support for your"
     echo $(date "+%H:%M:%S") " pl_netinit: network adapter. please send the following lines"
     echo $(date "+%H:%M:%S") " pl_netinit: to your PlanetLab support for further assistance"
-    echo
-    /sbin/lspci -n | /bin/grep "Class 0200"    
-    echo
-
     net_init_failed
-fi
+}
 
 echo $(date "+%H:%M:%S") " pl_netinit: attempting to start networking"
 /sbin/service network start
@@ -305,4 +336,3 @@ echo $(date "+%H:%M:%S") " pl_netinit: attempting to start networking"
 /sbin/ifconfig $ETH_DEVICE > $IFCONFIG_OUTPUT
 
 echo $(date "+%H:%M:%S") " pl_netinit: network online"
-
