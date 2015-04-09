@@ -44,6 +44,14 @@ sync-clean:
 
 # once sync-mount is OK you can start tweaking the contents of bootcd/ and overlay/ manually
 #
+# -- or -- use this target to push the files in initscripts/ and systemd/ into
+# that newly created bootcd/ before running sync-rewrap
+RSYNC = rsync -av --exclude .du
+
+sync-push:
+	$(RSYNC) initscripts/ root@$(KVMHOST):$(KVMDIR)/bootcd/etc/init.d/
+	$(RSYNC) systemd/ root@$(KVMHOST):$(KVMDIR)/bootcd/etc/systemd/system/
+
 # and then use this to rebuild a new .iso
 
 # same as in build.sh
@@ -51,9 +59,9 @@ MKISOFS_OPTS="-R -J -r -f -b isolinux.bin -c boot.cat -no-emul-boot -boot-load-s
 
 sync-rewrap:
 	ssh root@$(KVMHOST) "(cd $(KVMDIR); \
-			     echo "Rewrapping bootcd.img"; \
-			     (cd overlay && find . | cpio --quiet -c -o) | gzip -9 > iso/overlay.img; \
 			     echo "Rewrapping overlay.img"; \
-			     (cd bootcd && find . | cpio --quiet -c -o) | gzip -9 > iso/bootcd.img; \
+			     (cd overlay && find . | cpio --quiet -c -o) | gzip -1 > iso/overlay.img; \
+			     echo "Rewrapping bootcd.img"; \
+			     (cd bootcd && find . | cpio --quiet -c -o) | gzip -1 > iso/bootcd.img; \
 			     mkisofs -o $(NODE).iso $(MKISOFS_OPTS) iso/; \
 			    )"

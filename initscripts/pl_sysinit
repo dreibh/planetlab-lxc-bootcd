@@ -1,5 +1,11 @@
 #!/bin/sh
 
+### make sure this output shows up in the console
+
+exec 2>&1
+exec > /dev/console
+
+###
 . /etc/init.d/pl_functions
 
 echo ""
