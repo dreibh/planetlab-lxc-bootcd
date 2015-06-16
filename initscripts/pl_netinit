@@ -60,7 +60,7 @@ DEFAULT_NET_CONF=0
 
 function net_init_failed() {
     echo
-    echo $(date "+%H:%M:%S") " pl_netinit: network initialization failed,"
+    echo $(date "+%H:%M:%S") " pl_netinit: network initialization failed with interface $ETH_DEVICE"
     echo
     echo For forensics
     echo
@@ -71,7 +71,11 @@ function net_init_failed() {
     echo ========== ifconfig beg
     /sbin/ifconfig
     echo ========== ifconfig end
+    echo ========== ip address show beg
+    ip address show
+    echo ========== ip address show end
     echo 
+    echo $(date "+%H:%M:%S") " pl_netinit: network initialization failed with interface $ETH_DEVICE"
     echo $(date "+%H:%M:%S") " pl_netinit: shutting down machine in two hours"
     /bin/sleep 2h
     /sbin/shutdown -h now
@@ -263,7 +267,7 @@ ETH_DEVICE=
 if [[ -n "$NET_DEVICE" ]]; then
     # the user specified a mac address we should use. find the network
     # device for it.
-    NET_DEVICE=$(tr A-Z a-z <<<$NET_DEVICE)
+    NET_DEVICE=$(tr A-Z a-z <<< $NET_DEVICE)
 
     pushd /sys/class/net
     for device in *; do
@@ -305,14 +309,21 @@ fi
 # in any case, let us try to work around that by allowing some delay
 # here
 
-ALLOW=5
+# tmp: Thierry June 2015
+# on fedora 21 nodes we see this running in a context where eth0 is not known to the system
+# could be related to a dependency that we poorly describe to systemd
+# I am increasing this timeout to 2 minutes in order to check that conjecture
+ALLOW=120
 COUNTER=0
 while true; do
     if /sbin/ifconfig $ETH_DEVICE >& /dev/null; then
-	echo "pl_netinit: device present $ETH_DEVICE, proceeding (${COUNTER}s/${ALLOW}s)"
+	echo $(date "+%H:%M:%S") " pl_netinit: device present $ETH_DEVICE, proceeding (${COUNTER}s/${ALLOW}s)"
 	break
     fi
-    echo $(date "+%H:%M:%S") " pl_netinit: waiting for device $ETH_DEVICE,${COUNTER}s/${ALLOW}s"
+    echo $(date "+%H:%M:%S") " pl_netinit: waiting for device $ETH_DEVICE - ${COUNTER}s/${ALLOW}s"
+    echo ========== ifconfig beg
+    /sbin/ifconfig
+    echo ========== ifconfig end
     COUNTER=$(($COUNTER+1))
     [ $COUNTER -ge $ALLOW ] && net_init_failed
     sleep 1
