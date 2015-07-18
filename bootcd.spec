@@ -2,8 +2,8 @@
 %define nodefamily %{pldistro}-%{distroname}-%{_arch}
 
 %define name bootcd-%{nodefamily}
-%define version 5.2
-%define taglevel 6
+%define version 5.3
+%define taglevel 1
 
 # pldistro already in the rpm name
 %define release %{taglevel}%{?date:.%{date}}
@@ -117,6 +117,12 @@ rm -rf $RPM_BUILD_ROOT
 /etc/plc.d
 
 %changelog
+* Fri Jun 26 2015 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.3-1
+- use TLSv1 instead of SSLv3
+- on systemd distros, do not try to replace the whole boot sequence
+- as older bootCDs did; pl_boot is now just one more service, not the single
+- service to run; this solves f21 bootCDs not starting up properly
+
 * Fri Apr 24 2015 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.2-6
 - remove default kargs systemd.log_target=console console=ttyS0,115200
 - simpler bootcd layout (no memdisk nor isolinux-debug.bin)
