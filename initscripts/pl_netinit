@@ -350,23 +350,37 @@ echo $(date "+%H:%M:%S") " pl_netinit: attempting to start networking"
 
 echo $(date "+%H:%M:%S") " pl_netinit: network online"
 
-echo "BEG post pl_netinit forensics"
+function pl_netinit_forensics () {
 
-file=/root/.ssh/authorized_keys
-echo "$file"
-if ! [ -f "$file" ]; then
-    echo "!!!!!!!!!! missing $file"
-else
-    echo "---------- $file"
-    cat $file
-fi
+    echo "-------------------- BEG post pl_netinit forensics"
 
-file="/etc/ssh/sshd_config"    
-if ! [ -f "$file" ]; then
-    echo "!!!!!!!!!! missing $file"
-else
-    echo '---------- egrep Pass|Auth|PAM|Root' $file
-    grep -v '^#' $file | egrep 'Pass|Auth|PAM|Root'
-fi
+    file=/root/.ssh/authorized_keys
+    echo "$file"
+    if ! [ -f "$file" ]; then
+	echo "!!!!!!!!!! missing $file"
+    else
+	echo "---------- $file"
+	cat $file
+    fi
 
-echo "END post pl_netinit forensics"
+    file="/etc/ssh/sshd_config"    
+    if ! [ -f "$file" ]; then
+	echo "!!!!!!!!!! missing $file"
+    else
+	echo '---------- egrep Pass|Auth|PAM|Root' $file
+	grep -v '^#' $file | egrep 'Pass|Auth|PAM|Root'
+    fi
+
+    # on f22 we see an emty resolv.conf...
+    file=/etc/resolv.conf
+    if ! [ -f "$file" ]; then
+	echo "!!!!!!!!!! missing $file"
+    else
+	echo "---------- $file"
+	cat $file
+    fi
+    
+    echo "-------------------- END post pl_netinit forensics"
+}
+
+pl_netinit_forensics
