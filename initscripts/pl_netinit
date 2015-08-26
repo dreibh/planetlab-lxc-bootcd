@@ -350,23 +350,60 @@ echo $(date "+%H:%M:%S") " pl_netinit: attempting to start networking"
 
 echo $(date "+%H:%M:%S") " pl_netinit: network online"
 
-echo "BEG post pl_netinit forensics"
+# patch for f22 - if /etc/resolv.conf is empty in static mode
+function pl_netinit_patch_resolv_conf () {
+    file=/etc/resolv.conf
+    needed=""
+    # missing file : patch needed
+    if ! [ -f $file ]; then
+	needed=true
+    # empty file : patch needed
+    elif cmp $file /dev/null; then
+	needed=true
+    fi
+    if [ -n "$needed" ]; then
+	echo pl_netinit patching $file
+	source /etc/sysconfig/network-scripts/ifcfg-${ETH_DEVICE}
+	( [ -n "$DNS1" ] && echo nameserver $DNS1; \
+	  [ -n "$DNS2" ] && echo nameserver $DNS2 ) > $file
+    else
+	echo pl_netinit has no need to patch $file
+    fi
+    }
 
-file=/root/.ssh/authorized_keys
-echo "$file"
-if ! [ -f "$file" ]; then
-    echo "!!!!!!!!!! missing $file"
-else
-    echo "---------- $file"
-    cat $file
-fi
+function pl_netinit_forensics () {
 
-file="/etc/ssh/sshd_config"    
-if ! [ -f "$file" ]; then
-    echo "!!!!!!!!!! missing $file"
-else
-    echo '---------- egrep Pass|Auth|PAM|Root' $file
-    grep -v '^#' $file | egrep 'Pass|Auth|PAM|Root'
-fi
+    echo "-------------------- BEG post pl_netinit forensics"
 
-echo "END post pl_netinit forensics"
+    file=/root/.ssh/authorized_keys
+    echo "$file"
+    if ! [ -f "$file" ]; then
+	echo "!!!!!!!!!! missing $file"
+    else
+	echo "---------- $file"
+	cat $file
+    fi
+
+    file="/etc/ssh/sshd_config"    
+    if ! [ -f "$file" ]; then
+	echo "!!!!!!!!!! missing $file"
+    else
+	echo '---------- egrep Pass|Auth|PAM|Root' $file
+	grep -v '^#' $file | egrep 'Pass|Auth|PAM|Root'
+    fi
+
+    # on f22 we see an emty resolv.conf...
+    file=/etc/resolv.conf
+    if ! [ -f "$file" ]; then
+	echo "!!!!!!!!!! missing $file"
+    else
+	echo "---------- $file"
+	cat $file
+    fi
+    
+    echo "-------------------- END post pl_netinit forensics"
+}
+
+pl_netinit_patch_resolv_conf
+
+pl_netinit_forensics
