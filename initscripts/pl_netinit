@@ -364,6 +364,9 @@ function pl_netinit_patch_resolv_conf () {
     if [ -n "$needed" ]; then
 	echo pl_netinit patching $file
 	source /etc/sysconfig/network-scripts/ifcfg-${ETH_DEVICE}
+	# delete because it's a symlink to /run/systemd/resolve/resolv.conf
+	# which looks really weird (ls -lL /etc/resolv.conf does not show anything)
+	rm $file
 	( [ -n "$DNS1" ] && echo nameserver $DNS1; \
 	  [ -n "$DNS2" ] && echo nameserver $DNS2 ) > $file
     else
