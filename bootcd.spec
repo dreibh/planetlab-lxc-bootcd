@@ -3,7 +3,7 @@
 
 %define name bootcd-%{nodefamily}
 %define version 5.3
-%define taglevel 1
+%define taglevel 2
 
 # pldistro already in the rpm name
 %define release %{taglevel}%{?date:.%{date}}
@@ -117,6 +117,9 @@ rm -rf $RPM_BUILD_ROOT
 /etc/plc.d
 
 %changelog
+* Fri Nov 13 2015 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.3-2
+- various fixes for resolv.conf
+
 * Fri Jun 26 2015 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.3-1
 - use TLSv1 instead of SSLv3
 - on systemd distros, do not try to replace the whole boot sequence
