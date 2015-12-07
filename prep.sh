@@ -129,9 +129,15 @@ install -d -m 755 $isofs
 for kernel in $bootcd/boot/vmlinuz-* ; do
     if [ -f $kernel ] ; then
 	install -D -m 644 $kernel $isofs/kernel
+	echo "* BootCD kernel created from $kernel"
 	echo "* kernel created from $kernel" > $isofs/kernel.from
     fi
 done
+
+if [ ! -f $isofs/kernel ] ; then
+    echo "* BootCD prep.sh : FATAL: could not locate kernel - exiting"
+    exit 1
+fi
 
 # Don't need /boot anymore
 rm -rf $bootcd/boot
