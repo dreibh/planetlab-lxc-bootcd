@@ -3,7 +3,7 @@
 
 %define name bootcd-%{nodefamily}
 %define version 5.3
-%define taglevel 2
+%define taglevel 3
 
 # pldistro already in the rpm name
 %define release %{taglevel}%{?date:.%{date}}
@@ -117,6 +117,10 @@ rm -rf $RPM_BUILD_ROOT
 /etc/plc.d
 
 %changelog
+* Tue Dec 08 2015 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.3-3
+- patch for f23 as of dec. 2015 where kernel and initrd show up in
+- a new location under /boot
+
 * Fri Nov 13 2015 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.3-2
 - various fixes for resolv.conf
 
