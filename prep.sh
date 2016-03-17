@@ -129,9 +129,47 @@ install -d -m 755 $isofs
 for kernel in $bootcd/boot/vmlinuz-* ; do
     if [ -f $kernel ] ; then
 	install -D -m 644 $kernel $isofs/kernel
-	echo "* kernel created from $kernel" > $isofs/kernel.from
+	echo "* BootCD kernel (1) created from $kernel"
+	echo "* kernel created (1) from $kernel" > $isofs/kernel.from
     fi
 done
+
+# patch - Thierry - dec. 2015
+# somehow we see this good-old code produce a bootcd without a /kernel
+# this is odd because as far as rpm is concerned, the name should not have changed
+# anyways, at this point, here's what can be found in /boot
+# [root@2015-12-07--f23-bcd boot]# pwd
+# /build/BUILD/bootcd-lxc-f23-x86_64-5.3/bootcd/build/bootcd/boot
+# [root@2015-12-07--f23-bcd boot]# ls -R
+# .:
+# 8adf0b93a7f44be69499d21fa18ab5b8  loader
+# 
+# ./8adf0b93a7f44be69499d21fa18ab5b8:
+# 4.2.6-301.fc23.x86_64
+# 
+# ./8adf0b93a7f44be69499d21fa18ab5b8/4.2.6-301.fc23.x86_64:
+# initrd  linux
+# 
+# ./loader:
+# entries
+# 
+# ./loader/entries:
+# 8adf0b93a7f44be69499d21fa18ab5b8-4.2.6-301.fc23.x86_64.conf
+
+# second chance if first approach would not work
+if [ ! -f $isofs/kernel ] ; then
+    kernel=$(find $bootcd/boot -name linux)
+    if [ -f $kernel ] ; then
+	install -D -m 644 $kernel $isofs/kernel
+	echo "* BootCD kernel (2) created from $kernel"
+	echo "* kernel created (2) from $kernel" > $isofs/kernel.from
+    fi
+fi
+
+if [ ! -f $isofs/kernel ] ; then
+    echo "* BootCD prep.sh : FATAL: could not locate kernel - exiting"
+    exit 1
+fi
 
 # Don't need /boot anymore
 rm -rf $bootcd/boot
