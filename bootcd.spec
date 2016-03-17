@@ -117,6 +117,9 @@ rm -rf $RPM_BUILD_ROOT
 /etc/plc.d
 
 %changelog
+* Fri Mar 18 2016 Thomas Dreibholz
+- net.ifnames=0 to get eth0 (not enp0s2, etc.) under Fedora 23.
+
 * Tue Dec 08 2015 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.3-3
 - patch for f23 as of dec. 2015 where kernel and initrd show up in
 - a new location under /boot

@@ -393,7 +393,7 @@ EOF
 
     # tmp: should be restricted to f15 nodes and above
     # making sure the network interfaces are still numbered eth0 and above
-    KERNEL_ARGS="$KERNEL_ARGS biosdevname=0"
+    KERNEL_ARGS="$KERNEL_ARGS biosdevname=0 net.ifnames=0"
     # making sure selinux is turned off - somehow this is needed with lxc/f14
     KERNEL_ARGS="$KERNEL_ARGS selinux=0"
     # add any debug flag if any (defined in the header of this script)
