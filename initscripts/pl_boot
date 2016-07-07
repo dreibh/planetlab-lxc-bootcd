@@ -77,10 +77,10 @@ CONNECT_BOOT_SERVER_PATH=$BOOT_SERVER_PATH
 CONNECT_BOOT_SERVER_GPG_KEYRING=$BOOT_SERVER_GPG_KEYRING
 CONNECT_BOOT_SERVER_CACERT=$BOOT_SERVER_CACERT
 
-while : ; do
+while true; do
 
     if [[ -f $CANCEL_BOOT_FLAG ]]; then
-        echo $(date "+%H:%M:%S") " pl_boot: got request to cancel boot, exiting"
+        verbose-message "pl_boot: got request to cancel boot, exiting"
         exit 0
     fi
     
@@ -89,7 +89,7 @@ while : ; do
         contact_count=0
 
         if [[ $on_backup_server == 1 ]]; then
-            echo $(date "+%H:%M:%S") " pl_boot: failed to contact backup server, trying primary $BOOT_SERVER"
+            verbose-message "pl_boot: failed to contact backup server, trying primary $BOOT_SERVER"
 
             on_backup_server=0
 
@@ -99,7 +99,7 @@ while : ; do
             CONNECT_BOOT_SERVER_GPG_KEYRING=$BOOT_SERVER_GPG_KEYRING
             CONNECT_BOOT_SERVER_CACERT=$BOOT_SERVER_CACERT
         else
-            echo $(date "+%H:%M:%S") " pl_boot: failed to contact primary server, trying backup $BACKUP_BOOT_SERVER"
+            verbose-message "pl_boot: failed to contact primary server, trying backup $BACKUP_BOOT_SERVER"
 
             on_backup_server=1
 
@@ -113,7 +113,7 @@ while : ; do
 
     if [[ $contact_count != 0 ]]; then
 
-        echo $(date "+%H:%M:%S") " pl_boot: next attempt in 30s, to fetch script from server at $CONNECT_BOOT_SERVER"
+        verbose-message "pl_boot: next attempt in 30s, to fetch script from server at $CONNECT_BOOT_SERVER"
 	/bin/sleep 30
     fi
 
@@ -146,18 +146,18 @@ while : ; do
         --always-trust \
         --decrypt $UNVERIFIED_SCRIPT"
 
-    echo $(date "+%H:%M:%S") " pl_boot: generating new nonce"
+    verbose-message "pl_boot: generating new nonce"
     /usr/bin/head --bytes=32 /dev/urandom | \
     /usr/bin/od -tx1 -An --width=32 | \
     /bin/sed 's/ //g' > /tmp/nonce
 
-    echo $(date "+%H:%M:%S") " pl_boot: fetching script from boot server $CONNECT_BOOT_SERVER"
+    verbose-message "pl_boot: fetching script from boot server $CONNECT_BOOT_SERVER"
     ((contact_count++))
     rm -f $UNVERIFIED_SCRIPT
     $CURL_CMD
     curl_err=$?
     if [ $curl_err -ne 0 ]; then
-        echo $(date "+%H:%M:%S") " pl_boot: curl request failed with error $curl_err:"
+        verbose-message "pl_boot: curl request failed with error $curl_err:"
         cat /tmp/curl_errors
         echo
         if [ -n "$DISCONNECTED_OPERATION" ]; then
@@ -169,28 +169,28 @@ while : ; do
         else
             case $curl_err in
                 6)
-                    echo $(date "+%H:%M:%S") " This error likely indicates a networking configuration error. "
-                    echo $(date "+%H:%M:%S") " Please, check whether you can ping this machine.  If you can, "
-                    echo $(date "+%H:%M:%S") " we recommend checking your DNS settings.  If you cannot, then "
-                    echo $(date "+%H:%M:%S") " please double check your network settings registered at PLC and "
-                    echo $(date "+%H:%M:%S") " stored on this Boot Image."
+                    verbose-message "This error likely indicates a networking configuration error. "
+                    verbose-message "Please, check whether you can ping this machine.  If you can, "
+                    verbose-message "we recommend checking your DNS settings.  If you cannot, then "
+                    verbose-message "please double check your network settings registered at PLC and "
+                    verbose-message "stored on this Boot Image."
                 ;;
                 60)
-                    echo $(date "+%H:%M:%S") " This error likely indicates that the hardware clock is likely not set "
-                    echo $(date "+%H:%M:%S") " to GMT.  The result is that authentication between the local and "
-                    echo $(date "+%H:%M:%S") " remote site fails.  Please double check this machine's system "
-                    echo $(date "+%H:%M:%S") " clock, and set it to GMT in the BIOS. If after rebooting the same "
-                    echo $(date "+%H:%M:%S") " error occurs, please report the situation to support@planet-lab.org "
-                    echo $(date "+%H:%M:%S") " with as much detail as possible."
+                    verbose-message "This error likely indicates that the hardware clock is likely not set "
+                    verbose-message "to GMT.  The result is that authentication between the local and "
+                    verbose-message "remote site fails.  Please double check this machine's system "
+                    verbose-message "clock, and set it to GMT in the BIOS. If after rebooting the same "
+                    verbose-message "error occurs, please report the situation to support@planet-lab.org "
+                    verbose-message "with as much detail as possible."
                 ;;
                 *)
-                    echo $(date "+%H:%M:%S") " The best-practice approach for handling this error is not yet "
-                    echo $(date "+%H:%M:%S") " documented.  Please report this error to support@planet-lab.org "
-                    echo $(date "+%H:%M:%S") " with as much detail as possible."
+                    verbose-message "The best-practice approach for handling this error is not yet "
+                    verbose-message "documented.  Please report this error to support@planet-lab.org "
+                    verbose-message "with as much detail as possible."
                 ;;
             esac
 	    # in any case display as much info as we can (see pl_functions)
-	    pl_network_sanity_checks
+	    verbose-forensics "after curl"
 	    # retry
             continue
         fi
@@ -202,23 +202,23 @@ while : ; do
         rmdir /tmp/boot-media
     fi 
 
-    echo $(date "+%H:%M:%S") " pl_boot: verifying downloaded script"
+    verbose-message "pl_boot: verifying downloaded script"
     rm -f $VERIFIED_SCRIPT
     $GPG_CMD 2> /tmp/gpg_errors
     if [ $? -ne 0 ]; then
-        echo $(date "+%H:%M:%S") " pl_boot: failed to verify file:"
+        verbose-message "pl_boot: failed to verify file:"
         cat /tmp/gpg_errors
         echo
         continue
     fi
-    echo $(date "+%H:%M:%S") " pl_boot: decrypted and verified script succesfully"
+    verbose-message "pl_boot: decrypted and verified script succesfully"
 
-    echo $(date "+%H:%M:%S") " pl_boot: handing control to download script"
+    verbose-message "pl_boot: handing control to download script"
     rm -f $UNVERIFIED_SCRIPT
     chmod +x $VERIFIED_SCRIPT
     $VERIFIED_SCRIPT
     
-    echo $(date "+%H:%M:%S") " pl_boot: downloaded script has returned"
+    verbose-message "pl_boot: downloaded script has returned"
 done
 
-echo $(date "+%H:%M:%S") " pl_boot: automatic boot process canceled by user"
+verbose-message "pl_boot: automatic boot process canceled by user"

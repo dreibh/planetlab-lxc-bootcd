@@ -1,46 +1,81 @@
 #-*-shell-script-*-
 
-function verbose_show_message () {
+function verbose-message () {
+    echo ""
     echo $(date "+%H:%M:%S") " ==================== " "$@"
 }
 
-function verbose_run_command () {
+function verbose-run () {
     echo $(date "+%H:%M:%S") " ========== running" "$@"
     "$@"
     echo $(date "+%H:%M:%S") " ==========" "$@" "returned with retcod=$?"
 }
 
-function pl_network_sanity_checks () {
-    echo $(date "+%H:%M:%S") " ======================================== BEG SANITY CHECKS"
-    for file in $(ls /etc/resolv.conf /etc/sysconfig/network-scripts/ifcfg-eth* ) ; do 
-	verbose_run_command cat $file
+function verbose-file() {
+    file=$1; shift
+    echo "$file"
+    if ! [ -f "$file" ]; then
+	verbose-message "!!!!!!!!!! missing $file"
+    else
+	verbose-run cat $file
+    fi
+}
+
+function verbose-file-uncommented-patterns () {
+    file=$1; shift
+    egrep_pattern=$2; shift
+
+    if ! [ -f "$file" ]; then
+	verbose-message "!!!!!!!!!! missing $file"
+    else
+	echo '---------- egrep $egrep_pattern' $file
+	grep -v '^#' $file | egrep "$egrep_pattern"
+    fi
+}
+    
+function verbose-forensics () {
+    message="$1"; shift
+    verbose-message "BEG FORENSICS -- $message"
+    verbose-run dmesg
+    verbose-run lsmod
+    verbose-run lspci
+    
+    for file in /etc/resolv.conf /run/resolvconf/resolv.conf /etc/sysconfig/network-scripts/ifcfg-eth*; do 
+	verbose-file $file
     done
-    verbose_show_message Loaded modules
-    verbose_run_command lsmod
-    verbose_show_message Configured interfaces
-    verbose_run_command ifconfig
-    verbose_show_message cat /proc/net/dev
-    verbose_run_command cat /proc/net/dev
-    verbose_show_message Routing table
-    verbose_run_command netstat -rn
+    verbose-message Configured interfaces
+    verbose-run ls -l /sys/class/net/
+    verbose-run cat /proc/net/dev
+    verbose-run ip address show
+    verbose-message Routing table
+    verbose-run ip route show
     BOOT_FILE=/usr/boot/boot_server
     BOOT_SERVER=$(cat $BOOT_FILE)
-    verbose_show_message Pinging boot server "(" $BOOT_SERVER ")" from file $BOOT_FILE
-    verbose_run_command ping -c 4 -w 4 $BOOT_SERVER
-    verbose_show_message Pinging google public DNS 
-    verbose_run_command ping -c 1 -w 5 8.8.8.8
+    verbose-message Pinging boot server $BOOT_SERVER "(" from file $BOOT_FILE ")"
+    verbose-run ping -c 4 -w 4 $BOOT_SERVER
+    verbose-message Pinging google public DNS 
+    verbose-run ping -c 1 -w 5 8.8.8.8
     # try to resolve this hostname as that's the one used for ntp
     dnss=$(grep '^nameserver' /etc/resolv.conf 2>/dev/null | awk '{print $2;}')
     if [ -z "$dnss" ] ; then
 	# not too helpful, but..
-	verbose_show_message No server found in /etc/resolv.conf - Resolving hostname at the google public DNS
-	verbose_run_command host -W 4 pool.ntp.org 8.8.8.8
+	verbose-message "!!!" No server found in /etc/resolv.conf - Resolving hostname at the google public DNS
+	verbose-run host -W 4 pool.ntp.org 8.8.8.8
     else
 	for dns in $dnss; do
-	    verbose_show_message Resolving hostname at $dns
-	    verbose_run_command host -W 4 pool.ntp.org $dns
+	    verbose-message Resolving hostname at $dns
+	    verbose-run host -W 4 pool.ntp.org $dns
 	done
     fi
-    echo $(date "+%H:%M:%S") " ======================================== END SANITY CHECKS"
+    verbose-file /root/.ssh/authorized_keys
+    verbose-file-uncommented-patterns /etc/ssh/sshd_config 'Pass|Auth|PAM|Root'
+    verbose-message "END FORENSICS -- $message"
 }
 
+function hang-and-shutdown() {
+    message=$1; shift
+    verbose-message "message - shutting down in 2h"
+    # todo: maybe we can put a staticly linked sshd here
+    /bin/sleep 2h
+    /sbin/shutdown -h now
+}
