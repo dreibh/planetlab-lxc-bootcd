@@ -283,7 +283,7 @@ fi
 # tmp: Thierry June 2015
 # on fedora 21 nodes we see this running in a context where eth0 is not known to the system
 # could be related to a dependency that we poorly describe to systemd
-# I am increasing this timeout to 2 minutes in order to check that conjecture
+# I am increasing this timeout to 1 minute in order to check that conjecture
 ALLOW=60
 COUNTER=0
 while true; do
@@ -321,30 +321,36 @@ verbose-message "pl_netinit: attempting to start networking"
 
 verbose-message "pl_netinit: network online"
 
-# patch for f22 - if /etc/resolv.conf is empty in static mode
+# patch for f22 and above - if /etc/resolv.conf is empty or missing
 function pl-netinit-patch-resolv-conf () {
-    file=/etc/resolv.conf
+    file="$1"; shift
     needed=""
     # missing file : patch needed
     if ! [ -f $file ]; then
 	needed=true
     # empty file : patch needed
-    elif cmp $file /dev/null; then
-	needed=true
-    fi
-    if [ -n "$needed" ]; then
-	verbose-message "pl_netinit: patching $file"
-	source /etc/sysconfig/network-scripts/ifcfg-${ETH_DEVICE}
-	# delete because it's a symlink to /run/systemd/resolve/resolv.conf
-	# which looks really weird (ls -lL /etc/resolv.conf does not show anything)
-	rm $file
-	( [ -n "$DNS1" ] && echo nameserver $DNS1; \
-	  [ -n "$DNS2" ] && echo nameserver $DNS2 ) > $file
     else
-	echo pl_netinit has no need to patch $file
+	contents=$(grep -v '^#' $file)
+	contents=$(echo $contents)
+	[ -z "$contents" ] && needed=true
     fi
+    if [ -z "$needed" ]; then
+	echo pl_netinit has no need to patch $file
+	return
+    fi
+
+    verbose-message "pl_netinit: patching $file"
+    source /etc/sysconfig/network-scripts/ifcfg-${ETH_DEVICE}
+    # delete because it may be a symlink to /run/systemd/resolve/resolv.conf
+    # which looks really weird (ls -lL /etc/resolv.conf does not show anything)
+    rm -f $file
+    # mention the DNS servers defined in the config - if any
+    [ -n "$DNS1" ] && echo nameserver $DNS1 >> $file
+    [ -n "$DNS2" ] && echo nameserver $DNS2 >> $file
+    # also add landmark for good measure
+    echo "nameserver 8.8.8.8" >> $file
 }
 
-pl-netinit-patch-resolv-conf
+pl-netinit-patch-resolv-conf /etc/resolv.conf
 
 verbose-forensics "pl_netinit epilogue"

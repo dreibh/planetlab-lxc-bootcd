@@ -15,11 +15,16 @@ verbose-message "pl_sysinit: bringing system online"
 verbose-message "pl_sysinit: mounting file systems"
 verbose-run /bin/mount -v -a
 
+# on old systems that use init, we totally take control and replace
+# /etc/inittab with just our stuff, so nothing is going to run udev
+# for us and we need to start it ourselves
 if [ -x /sbin/start_udev ]; then
     verbose-message "pl_sysinit: starting udev daemon"
     verbose-run /sbin/start_udev
 else
-    verbose-message "pl_sysinit: WARNING cannot start udev daemon - /sbin/start_udev NOT FOUND"
+    # on systemd-based systems, udev is triggered by systemd
+    # but just in case we issue a warning
+    verbose-message "pl_sysinit: WARNING cannot start udev daemon (probably safe under systemd)"
 fi
 
 verbose-message "pl_sysinit: invoking hardware initialization script"

@@ -40,6 +40,8 @@ function verbose-forensics () {
     verbose-run lsmod
     verbose-run lspci
     
+    # XXX : need to check for a running udev
+
     for file in /etc/resolv.conf /run/resolvconf/resolv.conf /etc/sysconfig/network-scripts/ifcfg-eth*; do 
 	verbose-file $file
     done
