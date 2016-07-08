@@ -1,3 +1,5 @@
+Just a few notes on how the whole boot sequence is organized
+
 # overall sequence (sysV init / systemd)
 
 * `pl_sysinit`
