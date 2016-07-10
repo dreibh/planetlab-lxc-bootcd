@@ -3,7 +3,7 @@
 
 %define name bootcd-%{nodefamily}
 %define version 5.4
-%define taglevel 0
+%define taglevel 1
 
 # pldistro already in the rpm name
 %define release %{taglevel}%{?date:.%{date}}
@@ -114,6 +114,10 @@ rm -rf $RPM_BUILD_ROOT
 /etc/plc.d
 
 %changelog
+* Sun Jul 10 2016 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.4-1
+- use 8.8.8.8 s a DNS server if nothing else works
+- more consistent and verbose forensics system
+
 * Tue Dec 08 2015 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.3-3
 - patch for f23 as of dec. 2015 where kernel and initrd show up in
 - a new location under /boot
