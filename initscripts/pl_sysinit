@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ### make sure this output shows up in the console
 
@@ -8,42 +8,46 @@ exec > /dev/console
 ###
 . /etc/init.d/pl_functions
 
-echo ""
-echo "PlanetLab BootCD - distro @PLDISTRO@ based on @FCDISTRO@"
+verbose-message "PlanetLab BootCD - distro @PLDISTRO@ based on @FCDISTRO@"
 
-echo ""
-echo $(date "+%H:%M:%S") "pl_sysinit: bringing system online"
+verbose-message "pl_sysinit: bringing system online"
 
-echo ""
-echo $(date "+%H:%M:%S") "pl_sysinit: mounting file systems"
-/bin/mount -v -a
+verbose-message "pl_sysinit: mounting file systems"
+verbose-run /bin/mount -v -a
 
-echo ""
-echo $(date "+%H:%M:%S") "pl_sysinit: starting udevd"
-[ -x /sbin/start_udev ] && /sbin/start_udev
+# on old systems that use init, we totally take control and replace
+# /etc/inittab with just our stuff, so nothing is going to run udev
+# for us and we need to start it ourselves
+if [ -x /sbin/start_udev ]; then
+    verbose-message "pl_sysinit: starting udev daemon"
+    verbose-run /sbin/start_udev
+else
+    # on systemd-based systems, udev is triggered by systemd
+    # but just in case we issue a warning
+    verbose-message "pl_sysinit: WARNING cannot start udev daemon (probably safe under systemd)"
+fi
 
-echo ""
-echo $(date "+%H:%M:%S") "pl_sysinit: invoking hardware initialization script"
-/etc/init.d/pl_hwinit
+verbose-message "pl_sysinit: invoking hardware initialization script"
+verbose-run /etc/init.d/pl_hwinit
 
-check_initrd()
-{
+function check-initrd() {
     _mounted=0
     if [ -f /usr/isolinux/pl_version ] ; then
-        # it mounted, but we should probably make sure its our boot cd
+        # it is mounted, but we should probably make sure its our boot cd
         # this can be done by making sure the /pl_version file (on initrd)
         # matches /usr/isolinux/pl_version
 	initrd_version=$(/bin/cat /pl_version)
 	cd_version=$(/bin/cat /usr/isolinux/pl_version)
 	if [ "$initrd_version" == "$cd_version" ]; then
-	    _mounted=1 
+	    _mounted=1
+	else
+	    verbose-message "pl_sysinit: WARNING pl_version mismatch"
 	fi
     fi
     return $_mounted
 }
 
-check_block_devices()
-{
+function check-block-devices() {
     _mounted=0
     # so that * expands to empty string if there are no block devices
     shopt -s nullglob
@@ -83,7 +87,7 @@ check_block_devices()
 	    done
 	fi
 	
-	echo $(date "+%H:%M:%S") "pl_sysinit: checking $device for /usr contents"
+	verbose-message "pl_sysinit: checking $device for /usr contents"
 	/bin/mount -o ro -t iso9660 /dev/$device /usr 2>&1 > /dev/null
 	if [ $? -eq 0 ]; then
 	# it mounted, but we should probably make sure its our boot cd
@@ -96,7 +100,7 @@ check_block_devices()
 	    # eh, wrong cd, keep trying
 		/bin/umount /usr 2>&1 /dev/null
 	    else
-		echo $(date "+%H:%M:%S") "pl_sysinit: found cd and mounted on /usr"
+		verbose-message "pl_sysinit: found CD and mounted on /usr"
 		_mounted=1
 		break
 	    fi
@@ -105,79 +109,83 @@ check_block_devices()
     return $_mounted
 }
 
-echo $(date "+%H:%M:%S") "pl_sysinit: finding cd to mount on /usr"
+verbose-message "pl_sysinit: finding CD to mount on /usr"
 mounted=0
-check_initrd
+check-initrd
 if [ $? -eq 1 ]; then
     mounted=1
 else
     [ ! -d /usr ] && mkdir /usr
-    check_block_devices
+    check-block-devices
     [ $? -eq 1 ] && mounted=1
 fi
 
 if [ $mounted -eq 0 ]; then
-    echo $(date "+%H:%M:%S") "pl_sysinit: unable to find boot cdrom, cannot continue."
-    # todo: maybe we can put a staticly linked sshd here
-    /sbin/shutdown -h now
+    hang-and-shutdown  "pl_sysinit: ERROR - unable to find boot CD"
+    exit 1
 fi
-
 
 # parts of this were copied from devmap_mknod.sh from the device-mapper
 # source. Since fedora decided not to include it in the rpm, it is 
 # being copied here
-echo $(date "+%H:%M:%S") "pl_sysinit: creating device mapper control node"
+function create-device-mapper-node() {
 
-DM_DIR="mapper"
-DM_NAME="device-mapper"
-DIR="/dev/$DM_DIR"
-CONTROL="$DIR/control"
+    DM_DIR="mapper"
+    DM_NAME="device-mapper"
+    DIR="/dev/$DM_DIR"
+    CONTROL="$DIR/control"
 
-MAJOR=$(sed -n 's/^ *\([0-9]\+\) \+misc$/\1/p' /proc/devices)
-MINOR=$(sed -n "s/^ *\([0-9]\+\) \+$DM_NAME\$/\1/p" /proc/misc)
+    MAJOR=$(sed -n 's/^ *\([0-9]\+\) \+misc$/\1/p' /proc/devices)
+    MINOR=$(sed -n "s/^ *\([0-9]\+\) \+$DM_NAME\$/\1/p" /proc/misc)
+    
+    if [ -n "$MAJOR" ] && [ -n "$MINOR" ]; then
+	/bin/mkdir -p --mode=755 $DIR
+	/bin/rm -f $CONTROL
+	/bin/mknod --mode=600 $CONTROL c $MAJOR $MINOR
+    else
+	verbose-message "pl_sysinit: unable to create device mapper control node, continuing"
+    fi
+}
 
-if [ -n "$MAJOR" ] && [ -n "$MINOR" ]; then
-    /bin/mkdir -p --mode=755 $DIR
-    /bin/rm -f $CONTROL
-    /bin/mknod --mode=600 $CONTROL c $MAJOR $MINOR
-else
-    echo $(date "+%H:%M:%S") "pl_sysinit: unable to create device mapper control node, continuing"
-fi
+verbose-message "pl_sysinit: creating device mapper control node"
+create-device-mapper-node
 
-echo ""
-echo $(date "+%H:%M:%S") "pl_sysinit: configuring kernel parameters"
-/sbin/sysctl -e -p /etc/sysctl.conf
+verbose-message "pl_sysinit: configuring kernel parameters"
+verbose-run  /sbin/sysctl -e -p /etc/sysctl.conf
 
 # startup rsyslog if available (we're *NOT* running the standard rc)
 syslog=/etc/rc.d/init.d/rsyslog
-[ -x $syslog ] && $syslog start
-
-echo ""
-echo $(date "+%H:%M:%S") "pl_sysinit: bringing network online"
-/etc/init.d/pl_netinit
-
-# just in case, sometimes we're seeing weird stuff already at this point
-pl_network_sanity_checks
-
-echo ""
-echo $(date "+%H:%M:%S") "pl_sysinit: attempting to sync clock"
-/usr/sbin/ntpdate -b -t 10 -u pool.ntp.org
-
-# Handle /dev/rtc name change for newer kernels
-# otherwise hwclock fails
-baseMaj=`uname -r | cut -d "." -f1`
-baseMin=`uname -r | cut -d "." -f2`
-vers=`uname -r | cut -d "." -f3 | cut -d "-" -f1`
-if [ $baseMaj -eq 2 ];then
-    if [ $baseMin -eq 6 ]; then
-        if [ $vers -ge 32 ];then
-            if [ "$(readlink /dev/rtc)" != "/dev/rtc0" ]; then
-                rm -f /dev/rtc
-                ln -s /dev/rtc0 /dev/rtc
-            fi
-        fi
-    fi
+if [ -x $syslog ]; then
+    verbose-message "pl_sysinit: starting rsyslog"
+    verbose-run  $syslog start
+else
+    verbose-message "pl_sysinit: WARNING cannot start rsyslog"
 fi
 
-# save ntp clock to hardware
-/sbin/hwclock --systohc --utc
+verbose-message "pl_sysinit: bringing network online"
+verbose-run  /etc/init.d/pl_netinit
+
+function sync-clock() {
+    /usr/sbin/ntpdate -b -t 10 -u pool.ntp.org
+
+    # Handle /dev/rtc name change for newer kernels
+    # otherwise hwclock fails
+    baseMaj=`uname -r | cut -d "." -f1`
+    baseMin=`uname -r | cut -d "." -f2`
+    vers=`uname -r | cut -d "." -f3 | cut -d "-" -f1`
+    if [ $baseMaj -eq 2 ];then
+	if [ $baseMin -eq 6 ]; then
+            if [ $vers -ge 32 ];then
+		if [ "$(readlink /dev/rtc)" != "/dev/rtc0" ]; then
+                    rm -f /dev/rtc
+                    ln -s /dev/rtc0 /dev/rtc
+		fi
+            fi
+	fi
+    fi
+    # save ntp clock to hardware
+    /sbin/hwclock --systohc --utc
+}
+
+verbose-message "pl_sysinit: attempting to sync clock"
+sync-clock

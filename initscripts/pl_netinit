@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #-*-shell-script-*-
 
 set -x
@@ -58,50 +58,21 @@ IFCONFIG_OUTPUT=/tmp/ifconfig
 DEFAULT_NET_CONF=0
 
 
-function net_init_failed() {
-    echo
-    echo $(date "+%H:%M:%S") " pl_netinit: network initialization failed with interface $ETH_DEVICE"
-    echo
-    echo For forensics
-    echo
-    echo ========== lspci beg
-    /sbin/lspci -n | /bin/grep "Class 0200"    
-    echo ========== lspci end
-    echo
-    echo ========== ifconfig beg
-    /sbin/ifconfig
-    echo ========== ifconfig end
-    echo ========== ip address show beg
-    ip address show
-    echo ========== ip address show end
-    echo 
-    echo $(date "+%H:%M:%S") " pl_netinit: network initialization failed with interface $ETH_DEVICE"
-    echo $(date "+%H:%M:%S") " pl_netinit: shutting down machine in two hours"
-    /bin/sleep 2h
-    /sbin/shutdown -h now
+function net-init-failed() {
+    verbose-message "pl_netinit: network initialization failed with interface $ETH_DEVICE"
+    verbose-forensics "failed to configure $ETH_DEVICE"
+    hang-and-shutdown "net-init-failed"
     exit 1
-}
-
-# Function for checking the IP address to see if its sensible.
-function check_ip() {
-    case "$*" in
-        "" | *[!0-9.]* | *[!0-9]) return 1 ;;
-    esac
-    local IFS=.
-    set -- $*
-    [ $# -eq 4 ] &&
-    [ ${1:-666} -le 255 ] && [ ${2:-666} -le 255 ] &&
-    [ ${3:-666} -le 255 ] && [ ${4:-666} -le 255 ]
 }
 
 # find and parse a node network configuration file. return 0 if not found,
 # return 1 if found and parsed. if this is the case, DEFAULT_NET_CONF will 
 # be set to 1. For any found configuration file, $USED_NET_CONF will
 # contain the validated contents
-function find_node_config() {
+function find-node-config() {
     /bin/rm -f $TMP_OLD_FLOPPY_CONF_FILE 2>&1 > /dev/null
 
-    echo $(date "+%H:%M:%S") " pl_netinit: looking for node configuration file on floppy"
+    verbose-message "pl_netinit: looking for node configuration file on floppy"
     
     /bin/mount -o ro -t $NODE_CONF_DEVICE_FS_TYPES /dev/fd0 \
 	$CONF_DEVICE_MOUNT_POINT 2>&1 > /dev/null
@@ -110,7 +81,7 @@ function find_node_config() {
         # 1. check for new named file first on the floppy disk
 	if [ -r "$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME" ]; then
 	    conf_file="$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME"
-	    echo $(date "+%H:%M:%S") " pl_netinit: found node configuration file $conf_file"
+	    verbose-message "pl_netinit: found node configuration file $conf_file"
 	    /etc/init.d/pl_validateconf < $conf_file > $USED_NET_CONF
 	    /bin/umount $CONF_DEVICE_MOUNT_POINT
 	    return 1
@@ -122,14 +93,14 @@ function find_node_config() {
 	elif [ -r "$CONF_DEVICE_MOUNT_POINT/$OLD_NODE_CONF_NAME" ]; then
 	    conf_file="$CONF_DEVICE_MOUNT_POINT/$OLD_NODE_CONF_NAME"
 	    /bin/cp -f $conf_file $TMP_OLD_FLOPPY_CONF_FILE
-	    echo $(date "+%H:%M:%S") " pl_netinit: found old named configuration file, checking later."
+	    verbose-message "pl_netinit: found old named configuration file, checking later."
 	else
-	    echo $(date "+%H:%M:%S") " pl_netinit: floppy mounted, but no configuration file."
+	    verbose-message "pl_netinit: floppy mounted, but no configuration file."
 	fi
 
 	/bin/umount $CONF_DEVICE_MOUNT_POINT
     else
-	echo $(date "+%H:%M:%S") " pl_netinit: no floppy could be mounted, continuing search."
+	verbose-message "pl_netinit: no floppy could be mounted, continuing search."
     fi
 
     # 2. check for a new named file on removable flash devices (those 
@@ -137,7 +108,7 @@ function find_node_config() {
     # to prevent checking normal scsi disks, also make sure
     # /sys/block/<dev>/removable is set to 1
 
-    echo $(date "+%H:%M:%S") " pl_netinit: looking for node configuration file on flash based devices"
+    verbose-message "pl_netinit: looking for node configuration file on flash based devices"
 
     # make the sd* hd* expansion fail to an empty string if there are no sd
     # devices
@@ -153,20 +124,20 @@ function find_node_config() {
 	for partition in $partitions ; do
 	    check_dev=/dev/$partition
 
-	    echo $(date "+%H:%M:%S") " pl_netinit: looking for node configuration file on device $check_dev"
+	    verbose-message "pl_netinit: looking for node configuration file on device $check_dev"
 	    /bin/mount -o ro -t $NODE_CONF_DEVICE_FS_TYPES $check_dev \
 		$CONF_DEVICE_MOUNT_POINT 2>&1 > /dev/null
 	    if [[ $? -eq 0 ]]; then
 		if [ -r "$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME" ]; then
 		    conf_file="$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME"
-		    echo $(date "+%H:%M:%S") " pl_netinit: found node configuration file $conf_file"
+		    verbose-message "pl_netinit: found node configuration file $conf_file"
 		    /etc/init.d/pl_validateconf < $conf_file > $USED_NET_CONF
-		    echo $(date "+%H:%M:%S") " pl_netinit: found configuration"
+		    verbose-message "pl_netinit: found configuration"
 		    /bin/umount $CONF_DEVICE_MOUNT_POINT
 		    return 1
 		fi
 		
-		echo $(date "+%H:%M:%S") " pl_netinit: not found"
+		verbose-message "pl_netinit: ERROR - not found"
 
 		/bin/umount $CONF_DEVICE_MOUNT_POINT
 	    fi
@@ -180,27 +151,27 @@ function find_node_config() {
     # the file $TMP_OLD_FLOPPY_CONF_FILE will be readable.
     if [ -r "$TMP_OLD_FLOPPY_CONF_FILE" ]; then
 	conf_file=$TMP_OLD_FLOPPY_CONF_FILE
-	echo $(date "+%H:%M:%S") " pl_netinit: found node configuration file $conf_file"
+	verbose-message "pl_netinit: found node configuration file $conf_file"
 	/etc/init.d/pl_validateconf < $conf_file > $USED_NET_CONF
 	return 1
     fi
 
 
     # 4. check for plnode.txt on the cd at /usr/boot
-    echo $(date "+%H:%M:%S") " pl_netinit: looking for network configuration on cd in /usr/boot"
+    verbose-message "pl_netinit: looking for network configuration on cd in /usr/boot"
     if [ -r "$CD_NET_CONF_BOOT" ]; then
 	
-	echo $(date "+%H:%M:%S") " pl_netinit: found cd configuration file $CD_NET_BOOT_CONF"
+	verbose-message "pl_netinit: found cd configuration file $CD_NET_BOOT_CONF"
 	/etc/init.d/pl_validateconf < $CD_NET_CONF_BOOT > $USED_NET_CONF
 	return 1
     fi
     
 
     # 5. check for plnode.txt on the cd at /usr
-    echo $(date "+%H:%M:%S") " pl_netinit: looking for network configuration on cd in /usr"
+    verbose-message "pl_netinit: looking for network configuration on cd in /usr"
     if [ -r "$CD_NET_CONF_ROOT" ]; then
 	
-	echo $(date "+%H:%M:%S") " pl_netinit: found cd configuration file $CD_NET_CONF_ROOT"
+	verbose-message "pl_netinit: found cd configuration file $CD_NET_CONF_ROOT"
 	/etc/init.d/pl_validateconf < $CD_NET_CONF_ROOT > $USED_NET_CONF
 	return 1
     fi
@@ -210,9 +181,9 @@ function find_node_config() {
     # builtin default. this can't be used to install a machine, but
     # will at least let it download and run the boot manager, which
     # can inform the users appropriately.
-    echo $(date "+%H:%M:%S") " pl_netinit: using default network configuration"
+    verbose-message "pl_netinit: using default network configuration"
     if [ -r "$FALLBACK_NET_CONF" ]; then
-	echo $(date "+%H:%M:%S") " pl_netinit: found cd default configuration file $FALLBACK_NET_CONF"
+	verbose-message "pl_netinit: found cd default configuration file $FALLBACK_NET_CONF"
 	/etc/init.d/pl_validateconf < $FALLBACK_NET_CONF > $USED_NET_CONF
 	DEFAULT_NET_CONF=1
 	return 1
@@ -222,16 +193,16 @@ function find_node_config() {
 }
 
 
-echo $(date "+%H:%M:%S") " pl_netinit: bringing loopback network device up"
+verbose-message "pl_netinit: bringing loopback network device up"
 /sbin/ifconfig lo 127.0.0.1 up
 
-find_node_config
+find-node-config
 if [ $? -eq 0 ]; then
     # no network configuration file found. this should not happen as the
     # default cd image has a backup one. halt.
-    echo $(date "+%H:%M:%S") " pl_netinit: unable to find even a default network configuration"
-    echo $(date "+%H:%M:%S") " pl_netinit: file, this cd may be corrupt."
-    net_init_failed
+    verbose-message "pl_netinit: ERROR - unable to find even a default network configuration"
+    verbose-message "pl_netinit: file, this cd may be corrupt."
+    net-init-failed
 fi
 
 # load the configuration file. if it was a default one (not user specified),
@@ -240,7 +211,7 @@ fi
 # they will fail (as they should) - but the network will be up if dhcp is
 # available
 
-echo $(date "+%H:%M:%S") " pl_netinit: loading network configuration"
+verbose-message "pl_netinit: loading network configuration"
 . $USED_NET_CONF
 
 if [[ $DEFAULT_NET_CONF -eq 1 ]]; then
@@ -274,7 +245,7 @@ if [[ -n "$NET_DEVICE" ]]; then
 	dev_address=$(cat $device/address | tr A-Z a-z)
 	if [ "$device" == "$NET_DEVICE" -o "$dev_address" == "$NET_DEVICE" ]; then
 	    ETH_DEVICE=$device
-	    echo $(date "+%H:%M:%S") " pl_netinit: found device $ETH_DEVICE with mac address $dev_address"
+	    verbose-message "pl_netinit: found device $ETH_DEVICE with mac address $dev_address"
 	    break
 	fi
     done
@@ -294,10 +265,10 @@ fi
 
 # still nothing? fail the boot.
 if [[ -z "$ETH_DEVICE" ]]; then
-    echo $(date "+%H:%M:%S") " pl_netinit: unable to find a usable device, check to make sure"
-    echo $(date "+%H:%M:%S") " pl_netinit: the NET_DEVICE field in the configuration file"
-    echo $(date "+%H:%M:%S") " pl_netinit: corresponds with a network adapter on this system"
-    net_init_failed
+    verbose-message "pl_netinit: unable to find a usable device, check to make sure"
+    verbose-message "pl_netinit: the NET_DEVICE field in the configuration file"
+    verbose-message "pl_netinit: corresponds with a network adapter on this system"
+    net-init-failed
 fi
 
 # within a systemd-driven startup, we often see this stage
@@ -312,22 +283,22 @@ fi
 # tmp: Thierry June 2015
 # on fedora 21 nodes we see this running in a context where eth0 is not known to the system
 # could be related to a dependency that we poorly describe to systemd
-# I am increasing this timeout to 2 minutes in order to check that conjecture
+# I am increasing this timeout to 1 minute in order to check that conjecture
 ALLOW=60
 COUNTER=0
 while true; do
     if /sbin/ifconfig $ETH_DEVICE >& /dev/null; then
-	echo $(date "+%H:%M:%S") " pl_netinit: device present $ETH_DEVICE, proceeding (${COUNTER}s/${ALLOW}s)"
+	verbose-message "pl_netinit: device present $ETH_DEVICE, proceeding (${COUNTER}s/${ALLOW}s)"
 	break
     fi
-    echo $(date "+%H:%M:%S") " pl_netinit: waiting for device $ETH_DEVICE - ${COUNTER}s/${ALLOW}s"
+    verbose-message "pl_netinit: waiting for device $ETH_DEVICE - ${COUNTER}s/${ALLOW}s"
     set -x
     /sbin/ifconfig
     journalctl -b | egrep 'eth|bnx|udev'
     systemctl list-unit-files | grep -i network
     set +x 
     COUNTER=$(($COUNTER+1))
-    [ $COUNTER -ge $ALLOW ] && net_init_failed
+    [ $COUNTER -ge $ALLOW ] && net-init-failed
     sleep 1
 done
 
@@ -335,78 +306,51 @@ done
 # actually check to make sure ifconfig <device> succeeds
 
 /sbin/ifconfig $ETH_DEVICE up 2>&1 > /dev/null || {
-    echo $(date "+%H:%M:%S") " pl_netinit: device $ETH_DEVICE does not exist, most likely"
-    echo $(date "+%H:%M:%S") " pl_netinit: this CD does not have hardware support for your"
-    echo $(date "+%H:%M:%S") " pl_netinit: network adapter. please send the following lines"
-    echo $(date "+%H:%M:%S") " pl_netinit: to your PlanetLab support for further assistance"
-    net_init_failed
+    verbose-message "pl_netinit: device $ETH_DEVICE does not exist, most likely"
+    verbose-message "pl_netinit: this CD does not have hardware support for your"
+    verbose-message "pl_netinit: network adapter. please send the following lines"
+    verbose-message "pl_netinit: to your PlanetLab support for further assistance"
+    net-init-failed
 }
 
-echo $(date "+%H:%M:%S") " pl_netinit: attempting to start networking"
+verbose-message "pl_netinit: attempting to start networking"
 /sbin/service network start
 
 # for backwards compatibility
 /sbin/ifconfig $ETH_DEVICE > $IFCONFIG_OUTPUT
 
-echo $(date "+%H:%M:%S") " pl_netinit: network online"
+verbose-message "pl_netinit: network online"
 
-# patch for f22 - if /etc/resolv.conf is empty in static mode
-function pl_netinit_patch_resolv_conf () {
-    file=/etc/resolv.conf
+# patch for f22 and above - if /etc/resolv.conf is empty or missing
+function pl-netinit-patch-resolv-conf () {
+    file="$1"; shift
     needed=""
     # missing file : patch needed
     if ! [ -f $file ]; then
 	needed=true
     # empty file : patch needed
-    elif cmp $file /dev/null; then
-	needed=true
-    fi
-    if [ -n "$needed" ]; then
-	echo pl_netinit patching $file
-	source /etc/sysconfig/network-scripts/ifcfg-${ETH_DEVICE}
-	# delete because it's a symlink to /run/systemd/resolve/resolv.conf
-	# which looks really weird (ls -lL /etc/resolv.conf does not show anything)
-	rm $file
-	( [ -n "$DNS1" ] && echo nameserver $DNS1; \
-	  [ -n "$DNS2" ] && echo nameserver $DNS2 ) > $file
     else
+	contents=$(grep -v '^#' $file)
+	contents=$(echo $contents)
+	[ -z "$contents" ] && needed=true
+    fi
+    if [ -z "$needed" ]; then
 	echo pl_netinit has no need to patch $file
-    fi
-    }
-
-function pl_netinit_forensics () {
-
-    echo "-------------------- BEG post pl_netinit forensics"
-
-    file=/root/.ssh/authorized_keys
-    echo "$file"
-    if ! [ -f "$file" ]; then
-	echo "!!!!!!!!!! missing $file"
-    else
-	echo "---------- $file"
-	cat $file
+	return
     fi
 
-    file="/etc/ssh/sshd_config"    
-    if ! [ -f "$file" ]; then
-	echo "!!!!!!!!!! missing $file"
-    else
-	echo '---------- egrep Pass|Auth|PAM|Root' $file
-	grep -v '^#' $file | egrep 'Pass|Auth|PAM|Root'
-    fi
-
-    # on f22 we see an emty resolv.conf...
-    file=/etc/resolv.conf
-    if ! [ -f "$file" ]; then
-	echo "!!!!!!!!!! missing $file"
-    else
-	echo "---------- $file"
-	cat $file
-    fi
-    
-    echo "-------------------- END post pl_netinit forensics"
+    verbose-message "pl_netinit: patching $file"
+    source /etc/sysconfig/network-scripts/ifcfg-${ETH_DEVICE}
+    # delete because it may be a symlink to /run/systemd/resolve/resolv.conf
+    # which looks really weird (ls -lL /etc/resolv.conf does not show anything)
+    rm -f $file
+    # mention the DNS servers defined in the config - if any
+    [ -n "$DNS1" ] && echo nameserver $DNS1 >> $file
+    [ -n "$DNS2" ] && echo nameserver $DNS2 >> $file
+    # also add landmark for good measure
+    echo "nameserver 8.8.8.8" >> $file
 }
 
-pl_netinit_patch_resolv_conf
+pl-netinit-patch-resolv-conf /etc/resolv.conf
 
-pl_netinit_forensics
+verbose-forensics "pl_netinit epilogue"

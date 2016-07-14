@@ -2,8 +2,8 @@
 %define nodefamily %{pldistro}-%{distroname}-%{_arch}
 
 %define name bootcd-%{nodefamily}
-%define version 5.3
-%define taglevel 3
+%define version 5.4
+%define taglevel 1
 
 # pldistro already in the rpm name
 %define release %{taglevel}%{?date:.%{date}}
@@ -117,6 +117,10 @@ rm -rf $RPM_BUILD_ROOT
 /etc/plc.d
 
 %changelog
+* Sun Jul 10 2016 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.4-1
+- use 8.8.8.8 s a DNS server if nothing else works
+- more consistent and verbose forensics system
+
 * Fri Mar 18 2016 Thomas Dreibholz
 - net.ifnames=0 to get eth0 (not enp0s2, etc.) under Fedora 23.
 
