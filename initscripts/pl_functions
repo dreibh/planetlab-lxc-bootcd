@@ -49,6 +49,7 @@ function verbose-forensics () {
     verbose-run ls -l /sys/class/net/
     verbose-run cat /proc/net/dev
     verbose-run ip address show
+    verbose-run ip link show
     verbose-message Routing table
     verbose-run ip route show
     BOOT_FILE=/usr/boot/boot_server

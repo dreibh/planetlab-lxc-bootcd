@@ -194,7 +194,8 @@ function find-node-config() {
 
 
 verbose-message "pl_netinit: bringing loopback network device up"
-/sbin/ifconfig lo 127.0.0.1 up
+ip address add dev lo 127.0.0.1/8
+ip link set lo up
 
 find-node-config
 if [ $? -eq 0 ]; then
@@ -284,19 +285,17 @@ fi
 # on fedora 21 nodes we see this running in a context where eth0 is not known to the system
 # could be related to a dependency that we poorly describe to systemd
 # I am increasing this timeout to 1 minute in order to check that conjecture
-ALLOW=60
+ALLOW=10
 COUNTER=0
 while true; do
-    if /sbin/ifconfig $ETH_DEVICE >& /dev/null; then
-	verbose-message "pl_netinit: device present $ETH_DEVICE, proceeding (${COUNTER}s/${ALLOW}s)"
-	break
+    ### check if the interface is known
+    # instead of using ifconfig, check the kernel area
+    if [ -e /sys/class/net/$ETH_DEVICE ]; then
+        verbose-message "pl_netinit: device present $ETH_DEVICE"
+        break
     fi
     verbose-message "pl_netinit: waiting for device $ETH_DEVICE - ${COUNTER}s/${ALLOW}s"
-    set -x
-    /sbin/ifconfig
-    journalctl -b | egrep 'eth|bnx|udev'
-    systemctl list-unit-files | grep -i network
-    set +x 
+    sleep 1
     COUNTER=$(($COUNTER+1))
     [ $COUNTER -ge $ALLOW ] && net-init-failed
     sleep 1
@@ -305,7 +304,7 @@ done
 
 # actually check to make sure ifconfig <device> succeeds
 
-/sbin/ifconfig $ETH_DEVICE up 2>&1 > /dev/null || {
+/usr/libexec/nm-ifup $ETH_DEVICE >& /dev/null || {
     verbose-message "pl_netinit: device $ETH_DEVICE does not exist, most likely"
     verbose-message "pl_netinit: this CD does not have hardware support for your"
     verbose-message "pl_netinit: network adapter. please send the following lines"
