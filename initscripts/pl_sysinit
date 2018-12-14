@@ -86,7 +86,7 @@ function check-block-devices() {
                 fi
             done
         fi
-        
+
         verbose-message "pl_sysinit: checking $device for /usr contents"
         /bin/mount -o ro -t iso9660 /dev/$device /usr 2>&1 > /dev/null
         if [ $? -eq 0 ]; then
@@ -126,7 +126,7 @@ if [ $mounted -eq 0 ]; then
 fi
 
 # parts of this were copied from devmap_mknod.sh from the device-mapper
-# source. Since fedora decided not to include it in the rpm, it is 
+# source. Since fedora decided not to include it in the rpm, it is
 # being copied here
 function create-device-mapper-node() {
 
@@ -137,7 +137,7 @@ function create-device-mapper-node() {
 
     MAJOR=$(sed -n 's/^ *\([0-9]\+\) \+misc$/\1/p' /proc/devices)
     MINOR=$(sed -n "s/^ *\([0-9]\+\) \+$DM_NAME\$/\1/p" /proc/misc)
-    
+
     if [ -n "$MAJOR" ] && [ -n "$MINOR" ]; then
         /bin/mkdir -p --mode=755 $DIR
         /bin/rm -f $CONTROL

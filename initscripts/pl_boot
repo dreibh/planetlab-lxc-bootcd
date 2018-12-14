@@ -83,7 +83,7 @@ while true; do
         verbose-message "pl_boot: got request to cancel boot, exiting"
         exit 0
     fi
-    
+
     if [[ $contact_count -ge $ATTEMPTS_BEFORE_BACKUP ]]; then
 
         contact_count=0
@@ -200,7 +200,7 @@ while true; do
         cp $UNVERIFIED_SCRIPT /tmp/boot-media
         umount /tmp/boot-media
         rmdir /tmp/boot-media
-    fi 
+    fi
 
     verbose-message "pl_boot: verifying downloaded script"
     rm -f $VERIFIED_SCRIPT
@@ -217,7 +217,7 @@ while true; do
     rm -f $UNVERIFIED_SCRIPT
     chmod +x $VERIFIED_SCRIPT
     $VERIFIED_SCRIPT
-    
+
     verbose-message "pl_boot: downloaded script has returned"
 done
 

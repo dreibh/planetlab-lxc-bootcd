@@ -32,17 +32,17 @@ function verbose-file-uncommented-patterns () {
         grep -v '^#' $file | egrep "$egrep_pattern"
     fi
 }
-    
+
 function verbose-forensics () {
     message="$1"; shift
     verbose-message "BEG FORENSICS -- $message"
     verbose-run dmesg
     verbose-run lsmod
     verbose-run lspci
-    
+
     # XXX : need to check for a running udev
 
-    for file in /etc/resolv.conf /run/resolvconf/resolv.conf /etc/sysconfig/network-scripts/ifcfg-eth*; do 
+    for file in /etc/resolv.conf /run/resolvconf/resolv.conf /etc/sysconfig/network-scripts/ifcfg-eth*; do
         verbose-file $file
     done
     verbose-message Configured interfaces
@@ -56,7 +56,7 @@ function verbose-forensics () {
     BOOT_SERVER=$(cat $BOOT_FILE)
     verbose-message Pinging boot server $BOOT_SERVER "(" from file $BOOT_FILE ")"
     verbose-run ping -c 4 -w 4 $BOOT_SERVER
-    verbose-message Pinging google public DNS 
+    verbose-message Pinging google public DNS
     verbose-run ping -c 1 -w 5 8.8.8.8
     # try to resolve this hostname as that's the one used for ntp
     dnss=$(grep '^nameserver' /etc/resolv.conf 2>/dev/null | awk '{print $2;}')
