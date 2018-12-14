@@ -20,7 +20,7 @@ CD_NET_CONF_BOOT=/usr/boot/$NEW_NODE_CONF_NAME
 # the other location of cd-based network configuration file
 CD_NET_CONF_ROOT=/usr/$NEW_NODE_CONF_NAME
 
-# if all other network configuration file sources 
+# if all other network configuration file sources
 # don't exist, fall back to this one (always on the cd)
 FALLBACK_NET_CONF=/usr/boot/default-node.txt
 
@@ -66,14 +66,14 @@ function net-init-failed() {
 }
 
 # find and parse a node network configuration file. return 0 if not found,
-# return 1 if found and parsed. if this is the case, DEFAULT_NET_CONF will 
+# return 1 if found and parsed. if this is the case, DEFAULT_NET_CONF will
 # be set to 1. For any found configuration file, $USED_NET_CONF will
 # contain the validated contents
 function find-node-config() {
     /bin/rm -f $TMP_OLD_FLOPPY_CONF_FILE 2>&1 > /dev/null
 
     verbose-message "pl_netinit: looking for node configuration file on floppy"
-    
+
     /bin/mount -o ro -t $NODE_CONF_DEVICE_FS_TYPES /dev/fd0 \
 	$CONF_DEVICE_MOUNT_POINT 2>&1 > /dev/null
     if [[ $? -eq 0 ]]; then
@@ -103,7 +103,7 @@ function find-node-config() {
 	verbose-message "pl_netinit: no floppy could be mounted, continuing search."
     fi
 
-    # 2. check for a new named file on removable flash devices (those 
+    # 2. check for a new named file on removable flash devices (those
     # that start with sd*, because usb_storage emulates scsi devices).
     # to prevent checking normal scsi disks, also make sure
     # /sys/block/<dev>/removable is set to 1
@@ -136,7 +136,7 @@ function find-node-config() {
 		    /bin/umount $CONF_DEVICE_MOUNT_POINT
 		    return 1
 		fi
-		
+
 		verbose-message "pl_netinit: ERROR - not found"
 
 		/bin/umount $CONF_DEVICE_MOUNT_POINT
@@ -160,17 +160,17 @@ function find-node-config() {
     # 4. check for plnode.txt on the cd at /usr/boot
     verbose-message "pl_netinit: looking for network configuration on cd in /usr/boot"
     if [ -r "$CD_NET_CONF_BOOT" ]; then
-	
+
 	verbose-message "pl_netinit: found cd configuration file $CD_NET_BOOT_CONF"
 	/etc/init.d/pl_validateconf < $CD_NET_CONF_BOOT > $USED_NET_CONF
 	return 1
     fi
-    
+
 
     # 5. check for plnode.txt on the cd at /usr
     verbose-message "pl_netinit: looking for network configuration on cd in /usr"
     if [ -r "$CD_NET_CONF_ROOT" ]; then
-	
+
 	verbose-message "pl_netinit: found cd configuration file $CD_NET_CONF_ROOT"
 	/etc/init.d/pl_validateconf < $CD_NET_CONF_ROOT > $USED_NET_CONF
 	return 1
@@ -207,7 +207,7 @@ if [ $? -eq 0 ]; then
 fi
 
 # load the configuration file. if it was a default one (not user specified),
-# then remove the saved copy from /tmp, but continue on. since a network 
+# then remove the saved copy from /tmp, but continue on. since a network
 # configuration file is required and boot scripts only know about this location
 # they will fail (as they should) - but the network will be up if dhcp is
 # available
@@ -275,16 +275,7 @@ fi
 # within a systemd-driven startup, we often see this stage
 # triggered before the network interface is actually exposed
 # by udev/kernel
-# although of course we have network-online.target
-# as a requirement; go figure what systemd actually does..
-
-# in any case, let us try to work around that by allowing some delay
-# here
-
-# tmp: Thierry June 2015
-# on fedora 21 nodes we see this running in a context where eth0 is not known to the system
-# could be related to a dependency that we poorly describe to systemd
-# I am increasing this timeout to 1 minute in order to check that conjecture
+# so allow for some small delay here
 ALLOW=10
 COUNTER=0
 while true; do
