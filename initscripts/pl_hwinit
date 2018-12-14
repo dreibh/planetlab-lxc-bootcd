@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# xxx could use a port to python3..
+
 import sys
 import pypci
 import pypcimap
@@ -37,7 +39,7 @@ def main(argv):
     for blacklist in blacklists:
         blf = "/etc/modprobe.d/{}".format(blacklist)
         if os.path.exists(blf):
-	    f = open(blf)
+            f = open(blf)
             for i in f.readlines():
                 if i.startswith("blacklist"):
                     blacklisted_modules.append(i.split()[1])
@@ -64,30 +66,30 @@ def main(argv):
                     storage_devices += 1
                 elif base == 0x02:
                     network_devices += 1
-    
+
                 # FIXME: This needs improved logic in the case of multiple matching modules
                 for module in modules:
                     if module not in blacklisted_modules:
                         verbose_message("pl_hwinit: found and loading module {} (%s)" % (module, slot))
                         modprobe(module, loadedmodules)
-    
+
         if network_devices == 0:
             verbose_message("pl_hwinit: no supported network devices found!")
             verbose_message("pl_hwinit: the following devices were found, but have no driver:")
             lines = [ "{} x {}".format(slot, dev) for slot, dev in missing ]
             for line in lines:
                 verbose_message("pl_hwinit: missing " + line)
-    
+
         # XXX: could check for storage devices too, but older kernels have a lot of that built-in
-    
+
         # sd_mod won't get loaded automatically
         verbose_message("pl_hwinit: loading sd_mod")
         modprobe("sd_mod", loadedmodules)
-    
+
         # load usb_storage to support node conf files on flash disks
         verbose_message("pl_hwinit: loading usb_storage")
         modprobe("usb_storage", loadedmodules)
-    
+
         verbose_message("pl_hwinit: loading floppy device driver")
         modprobe("floppy", loadedmodules, "floppy=0,allowed_drive_mask")
 
@@ -104,7 +106,7 @@ def main(argv):
 
     # the way this will be done is to look for files in /sys/devices that are named
     # 'bInterfaceClass', these will be a list of the usb devices on the system, and
-    # their primary usb device interface class ids. The base directory these files 
+    # their primary usb device interface class ids. The base directory these files
     # exist in will be the full path to the /sys/device entry for that device.
     # for each mass storage devices (they have an interface class value of 08),
     # we wait for a new symbolic link named 'driver' to exist in that directory,
@@ -140,7 +142,7 @@ def main(argv):
 
         total_wait_time = 0
         success = False
-        while total_wait_time < MAX_USB_WAIT_TIME:    
+        while total_wait_time < MAX_USB_WAIT_TIME:
             total_wait_time += PER_CHECK_USB_WAIT_TIME
 
             verbose_message("pl_hwinit: waiting {} seconds.".format(PER_CHECK_USB_WAIT_TIME))
