@@ -15,9 +15,9 @@ function verbose-file() {
     file=$1; shift
     echo "$file"
     if ! [ -f "$file" ]; then
-	verbose-message "!!!!!!!!!! missing $file"
+        verbose-message "!!!!!!!!!! missing $file"
     else
-	verbose-run cat $file
+        verbose-run cat $file
     fi
 }
 
@@ -26,10 +26,10 @@ function verbose-file-uncommented-patterns () {
     egrep_pattern=$2; shift
 
     if ! [ -f "$file" ]; then
-	verbose-message "!!!!!!!!!! missing $file"
+        verbose-message "!!!!!!!!!! missing $file"
     else
-	echo '---------- egrep $egrep_pattern' $file
-	grep -v '^#' $file | egrep "$egrep_pattern"
+        echo '---------- egrep $egrep_pattern' $file
+        grep -v '^#' $file | egrep "$egrep_pattern"
     fi
 }
     
@@ -43,7 +43,7 @@ function verbose-forensics () {
     # XXX : need to check for a running udev
 
     for file in /etc/resolv.conf /run/resolvconf/resolv.conf /etc/sysconfig/network-scripts/ifcfg-eth*; do 
-	verbose-file $file
+        verbose-file $file
     done
     verbose-message Configured interfaces
     verbose-run ls -l /sys/class/net/
@@ -61,14 +61,14 @@ function verbose-forensics () {
     # try to resolve this hostname as that's the one used for ntp
     dnss=$(grep '^nameserver' /etc/resolv.conf 2>/dev/null | awk '{print $2;}')
     if [ -z "$dnss" ] ; then
-	# not too helpful, but..
-	verbose-message "!!!" No server found in /etc/resolv.conf - Resolving hostname at the google public DNS
-	verbose-run host -W 4 pool.ntp.org 8.8.8.8
+        # not too helpful, but..
+        verbose-message "!!!" No server found in /etc/resolv.conf - Resolving hostname at the google public DNS
+        verbose-run host -W 4 pool.ntp.org 8.8.8.8
     else
-	for dns in $dnss; do
-	    verbose-message Resolving hostname at $dns
-	    verbose-run host -W 4 pool.ntp.org $dns
-	done
+        for dns in $dnss; do
+            verbose-message Resolving hostname at $dns
+            verbose-run host -W 4 pool.ntp.org $dns
+        done
     fi
     verbose-file /root/.ssh/authorized_keys
     verbose-file-uncommented-patterns /etc/ssh/sshd_config 'Pass|Auth|PAM|Root'

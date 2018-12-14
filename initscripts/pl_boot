@@ -114,7 +114,7 @@ while true; do
     if [[ $contact_count != 0 ]]; then
 
         verbose-message "pl_boot: next attempt in 30s, to fetch script from server at $CONNECT_BOOT_SERVER"
-	/bin/sleep 30
+        /bin/sleep 30
     fi
 
     # June 2015 : using --tlsv1 instead of sslv3 that should be available
@@ -189,9 +189,9 @@ while true; do
                     verbose-message "with as much detail as possible."
                 ;;
             esac
-	    # in any case display as much info as we can (see pl_functions)
-	    verbose-forensics "after curl"
-	    # retry
+            # in any case display as much info as we can (see pl_functions)
+            verbose-forensics "after curl"
+            # retry
             continue
         fi
     elif [ -n "$DISCONNECTED_OPERATION" ]; then

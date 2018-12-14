@@ -37,7 +37,7 @@ def main(argv):
     for blacklist in blacklists:
         blf = "/etc/modprobe.d/{}".format(blacklist)
         if os.path.exists(blf):
-	    f = open(blf)
+            f = open(blf)
             for i in f.readlines():
                 if i.startswith("blacklist"):
                     blacklisted_modules.append(i.split()[1])

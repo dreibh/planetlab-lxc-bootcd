@@ -75,32 +75,32 @@ function find-node-config() {
     verbose-message "pl_netinit: looking for node configuration file on floppy"
 
     /bin/mount -o ro -t $NODE_CONF_DEVICE_FS_TYPES /dev/fd0 \
-	$CONF_DEVICE_MOUNT_POINT 2>&1 > /dev/null
+        $CONF_DEVICE_MOUNT_POINT 2>&1 > /dev/null
     if [[ $? -eq 0 ]]; then
 
         # 1. check for new named file first on the floppy disk
-	if [ -r "$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME" ]; then
-	    conf_file="$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME"
-	    verbose-message "pl_netinit: found node configuration file $conf_file"
-	    /etc/init.d/pl_validateconf < $conf_file > $USED_NET_CONF
-	    /bin/umount $CONF_DEVICE_MOUNT_POINT
-	    return 1
+        if [ -r "$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME" ]; then
+            conf_file="$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME"
+            verbose-message "pl_netinit: found node configuration file $conf_file"
+            /etc/init.d/pl_validateconf < $conf_file > $USED_NET_CONF
+            /bin/umount $CONF_DEVICE_MOUNT_POINT
+            return 1
 
         # since we have the floppy mounted already, see if an old file
         # exists there so we don't have to remount the floppy when we need
         # to check for an old file on it (later in the order). if it does
         # just copy it off to a special location
-	elif [ -r "$CONF_DEVICE_MOUNT_POINT/$OLD_NODE_CONF_NAME" ]; then
-	    conf_file="$CONF_DEVICE_MOUNT_POINT/$OLD_NODE_CONF_NAME"
-	    /bin/cp -f $conf_file $TMP_OLD_FLOPPY_CONF_FILE
-	    verbose-message "pl_netinit: found old named configuration file, checking later."
-	else
-	    verbose-message "pl_netinit: floppy mounted, but no configuration file."
-	fi
+        elif [ -r "$CONF_DEVICE_MOUNT_POINT/$OLD_NODE_CONF_NAME" ]; then
+            conf_file="$CONF_DEVICE_MOUNT_POINT/$OLD_NODE_CONF_NAME"
+            /bin/cp -f $conf_file $TMP_OLD_FLOPPY_CONF_FILE
+            verbose-message "pl_netinit: found old named configuration file, checking later."
+        else
+            verbose-message "pl_netinit: floppy mounted, but no configuration file."
+        fi
 
-	/bin/umount $CONF_DEVICE_MOUNT_POINT
+        /bin/umount $CONF_DEVICE_MOUNT_POINT
     else
-	verbose-message "pl_netinit: no floppy could be mounted, continuing search."
+        verbose-message "pl_netinit: no floppy could be mounted, continuing search."
     fi
 
     # 2. check for a new named file on removable flash devices (those
@@ -115,33 +115,33 @@ function find-node-config() {
     shopt -s nullglob
 
     for device in /sys/block/[hsv]d*; do
-	removable=$(cat $device/removable)
-	if [[ $removable -ne 1 ]]; then
-	    continue
-	fi
+        removable=$(cat $device/removable)
+        if [[ $removable -ne 1 ]]; then
+            continue
+        fi
 
-	partitions=$(/bin/awk "\$4 ~ /$(basename $device)[0-9]*/ { print \$4 }" /proc/partitions)
-	for partition in $partitions ; do
-	    check_dev=/dev/$partition
+        partitions=$(/bin/awk "\$4 ~ /$(basename $device)[0-9]*/ { print \$4 }" /proc/partitions)
+        for partition in $partitions ; do
+            check_dev=/dev/$partition
 
-	    verbose-message "pl_netinit: looking for node configuration file on device $check_dev"
-	    /bin/mount -o ro -t $NODE_CONF_DEVICE_FS_TYPES $check_dev \
-		$CONF_DEVICE_MOUNT_POINT 2>&1 > /dev/null
-	    if [[ $? -eq 0 ]]; then
-		if [ -r "$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME" ]; then
-		    conf_file="$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME"
-		    verbose-message "pl_netinit: found node configuration file $conf_file"
-		    /etc/init.d/pl_validateconf < $conf_file > $USED_NET_CONF
-		    verbose-message "pl_netinit: found configuration"
-		    /bin/umount $CONF_DEVICE_MOUNT_POINT
-		    return 1
-		fi
+            verbose-message "pl_netinit: looking for node configuration file on device $check_dev"
+            /bin/mount -o ro -t $NODE_CONF_DEVICE_FS_TYPES $check_dev \
+                $CONF_DEVICE_MOUNT_POINT 2>&1 > /dev/null
+            if [[ $? -eq 0 ]]; then
+                if [ -r "$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME" ]; then
+                    conf_file="$CONF_DEVICE_MOUNT_POINT/$NEW_NODE_CONF_NAME"
+                    verbose-message "pl_netinit: found node configuration file $conf_file"
+                    /etc/init.d/pl_validateconf < $conf_file > $USED_NET_CONF
+                    verbose-message "pl_netinit: found configuration"
+                    /bin/umount $CONF_DEVICE_MOUNT_POINT
+                    return 1
+                fi
 
-		verbose-message "pl_netinit: ERROR - not found"
+                verbose-message "pl_netinit: ERROR - not found"
 
-		/bin/umount $CONF_DEVICE_MOUNT_POINT
-	    fi
-	done
+                /bin/umount $CONF_DEVICE_MOUNT_POINT
+            fi
+        done
     done
 
     # normal filename expansion setting
@@ -150,10 +150,10 @@ function find-node-config() {
     # 3. see if there is an old file on the floppy disk. if there was,
     # the file $TMP_OLD_FLOPPY_CONF_FILE will be readable.
     if [ -r "$TMP_OLD_FLOPPY_CONF_FILE" ]; then
-	conf_file=$TMP_OLD_FLOPPY_CONF_FILE
-	verbose-message "pl_netinit: found node configuration file $conf_file"
-	/etc/init.d/pl_validateconf < $conf_file > $USED_NET_CONF
-	return 1
+        conf_file=$TMP_OLD_FLOPPY_CONF_FILE
+        verbose-message "pl_netinit: found node configuration file $conf_file"
+        /etc/init.d/pl_validateconf < $conf_file > $USED_NET_CONF
+        return 1
     fi
 
 
@@ -161,9 +161,9 @@ function find-node-config() {
     verbose-message "pl_netinit: looking for network configuration on cd in /usr/boot"
     if [ -r "$CD_NET_CONF_BOOT" ]; then
 
-	verbose-message "pl_netinit: found cd configuration file $CD_NET_BOOT_CONF"
-	/etc/init.d/pl_validateconf < $CD_NET_CONF_BOOT > $USED_NET_CONF
-	return 1
+        verbose-message "pl_netinit: found cd configuration file $CD_NET_BOOT_CONF"
+        /etc/init.d/pl_validateconf < $CD_NET_CONF_BOOT > $USED_NET_CONF
+        return 1
     fi
 
 
@@ -171,9 +171,9 @@ function find-node-config() {
     verbose-message "pl_netinit: looking for network configuration on cd in /usr"
     if [ -r "$CD_NET_CONF_ROOT" ]; then
 
-	verbose-message "pl_netinit: found cd configuration file $CD_NET_CONF_ROOT"
-	/etc/init.d/pl_validateconf < $CD_NET_CONF_ROOT > $USED_NET_CONF
-	return 1
+        verbose-message "pl_netinit: found cd configuration file $CD_NET_CONF_ROOT"
+        /etc/init.d/pl_validateconf < $CD_NET_CONF_ROOT > $USED_NET_CONF
+        return 1
     fi
 
 
@@ -183,10 +183,10 @@ function find-node-config() {
     # can inform the users appropriately.
     verbose-message "pl_netinit: using default network configuration"
     if [ -r "$FALLBACK_NET_CONF" ]; then
-	verbose-message "pl_netinit: found cd default configuration file $FALLBACK_NET_CONF"
-	/etc/init.d/pl_validateconf < $FALLBACK_NET_CONF > $USED_NET_CONF
-	DEFAULT_NET_CONF=1
-	return 1
+        verbose-message "pl_netinit: found cd default configuration file $FALLBACK_NET_CONF"
+        /etc/init.d/pl_validateconf < $FALLBACK_NET_CONF > $USED_NET_CONF
+        DEFAULT_NET_CONF=1
+        return 1
     fi
 
     return 0
@@ -224,7 +224,7 @@ if [[ -n "$IPMI_ADDRESS" ]] ; then
     echo -n "pl_netinit: initializing IPMI: "
     cmd="ipnmac -i $IPMI_ADDRESS"
     if [[ -n "$IPMI_MAC" ]] ; then
-	cmd="$cmd -m $IPMI_MAC"
+        cmd="$cmd -m $IPMI_MAC"
     fi
     echo $cmd
     $cmd
@@ -243,12 +243,12 @@ if [[ -n "$NET_DEVICE" ]]; then
 
     pushd /sys/class/net
     for device in *; do
-	dev_address=$(cat $device/address | tr A-Z a-z)
-	if [ "$device" == "$NET_DEVICE" -o "$dev_address" == "$NET_DEVICE" ]; then
-	    ETH_DEVICE=$device
-	    verbose-message "pl_netinit: found device $ETH_DEVICE with mac address $dev_address"
-	    break
-	fi
+        dev_address=$(cat $device/address | tr A-Z a-z)
+        if [ "$device" == "$NET_DEVICE" -o "$dev_address" == "$NET_DEVICE" ]; then
+            ETH_DEVICE=$device
+            verbose-message "pl_netinit: found device $ETH_DEVICE with mac address $dev_address"
+            break
+        fi
     done
     popd
 fi
@@ -257,9 +257,9 @@ fi
 if [[ -z "$ETH_DEVICE" ]]; then
     pushd /etc/sysconfig/network-scripts > /dev/null
     for conf in ifcfg-*; do
-	egrep -q '^PRIMARY=["'"'"']?[yY1t]' $conf || continue
-	ETH_DEVICE=${conf#ifcfg-}
-	break
+        egrep -q '^PRIMARY=["'"'"']?[yY1t]' $conf || continue
+        ETH_DEVICE=${conf#ifcfg-}
+        break
     done
     popd > /dev/null
 fi
@@ -317,16 +317,16 @@ function pl-netinit-patch-resolv-conf () {
     needed=""
     # missing file : patch needed
     if ! [ -f $file ]; then
-	needed=true
+        needed=true
     # empty file : patch needed
     else
-	contents=$(grep -v '^#' $file)
-	contents=$(echo $contents)
-	[ -z "$contents" ] && needed=true
+        contents=$(grep -v '^#' $file)
+        contents=$(echo $contents)
+        [ -z "$contents" ] && needed=true
     fi
     if [ -z "$needed" ]; then
-	echo pl_netinit has no need to patch $file
-	return
+        echo pl_netinit has no need to patch $file
+        return
     fi
 
     verbose-message "pl_netinit: patching $file"
