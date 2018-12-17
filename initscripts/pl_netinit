@@ -3,6 +3,8 @@
 
 set -x
 
+source /etc/init.d/pl_functions
+
 # the name of the floppy based network configuration
 # files (checked first). the name planet.cnf is kept
 # for backward compatibility with old nodes, and only
