@@ -6,9 +6,9 @@ exec 2>&1
 exec > /dev/console
 
 ###
-. /etc/init.d/pl_functions
+source /etc/init.d/pl_functions
 
-. /tmp/planet.cnf
+source /tmp/planet.cnf
 
 # Run gpg once to create default options
 GNUPGHOME=/root

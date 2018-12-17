@@ -6,7 +6,7 @@ exec 2>&1
 exec > /dev/console
 
 ###
-. /etc/init.d/pl_functions
+source /etc/init.d/pl_functions
 
 verbose-message "PlanetLab BootCD - distro @PLDISTRO@ based on @FCDISTRO@"
 
@@ -60,7 +60,7 @@ function check-block-devices() {
 
         start_device=${device:0:2}
         if [ "$start_device" == "ra" ] || [ "$start_device" == "md" ] ||
-            [ "$start_device" == "lo" ] || [ "$start_device" == "fd" ]; then
+           [ "$start_device" == "lo" ] || [ "$start_device" == "fd" ]; then
             continue
         fi
 
@@ -151,19 +151,19 @@ verbose-message "pl_sysinit: creating device mapper control node"
 create-device-mapper-node
 
 verbose-message "pl_sysinit: configuring kernel parameters"
-verbose-run  /sbin/sysctl -e -p /etc/sysctl.conf
+verbose-run /sbin/sysctl -e -p /etc/sysctl.conf
 
 # startup rsyslog if available (we're *NOT* running the standard rc)
 syslog=/etc/rc.d/init.d/rsyslog
 if [ -x $syslog ]; then
     verbose-message "pl_sysinit: starting rsyslog"
-    verbose-run  $syslog start
+    verbose-run $syslog start
 else
     verbose-message "pl_sysinit: WARNING cannot start rsyslog"
 fi
 
 verbose-message "pl_sysinit: bringing network online"
-verbose-run  /etc/init.d/pl_netinit
+verbose-run /etc/init.d/pl_netinit
 
 function sync-clock() {
     /usr/sbin/ntpdate -b -t 10 -u pool.ntp.org
