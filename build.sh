@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Builds custom BootCD ISO and USB images in the current
-# directory. 
+# directory.
 #
 # Aaron Klingaman <alk@absarokasoft.com>
 # Mark Huang <mlhuang@cs.princeton.edu>
@@ -104,7 +104,7 @@ function init_and_check () {
 
     # The reference image is expected to have been built by prep.sh (see .spec)
     # we disable the initial logic that called prep.sh if that was not the case
-    # this is because prep.sh needs to know pldistro 
+    # this is because prep.sh needs to know pldistro
     if [ ! -f $ISOREF/isofs/bootcd.img -o ! -f $ISOREF/version.txt ] ; then
         echo "Could not find isofs and version.txt in $ISOREF"
         if [ "$VARIANT" == "build" ] ; then
@@ -136,7 +136,7 @@ function init_and_check () {
 # without the need for a full devel environment
 # for example, you would create /root/custom-bootcd/etc/rc.d/init.d/pl_hwinit
 # and run this script with -C /root/custom-bootcd
-# this creates a third .img image of the custom dir, that 'hides' the files from 
+# this creates a third .img image of the custom dir, that 'hides' the files from
 # bootcd.img in the resulting unionfs
 # it seems that this feature has not been used nor tested in a long time, use with care
 
@@ -163,7 +163,7 @@ usage() {
     exit 1
 }
 
-#################### 
+####################
 function parse_command_line () {
 
     # init
@@ -203,7 +203,7 @@ function parse_command_line () {
         NODE_CONFIGURATION_FILE="$cf_dir"/"$cf_file"
     fi
 
-    # check TYPES 
+    # check TYPES
     local matcher="XXX$(echo $ALL_TYPES | sed -e 's,\W,XXX,g')XXX"
     for t in $TYPES; do
         echo Checking type $t
@@ -299,7 +299,7 @@ function build_overlay () {
     done
 
     # Install old-style boot server configuration files
-    # as opposed to what a former comment suggested, 
+    # as opposed to what a former comment suggested,
     # this is still required, somewhere in the bootmanager apparently
     install -D -m 644 $PLC_BOOT_CA_SSL_CRT $OVERLAY/usr/bootme/cacert/$PLC_BOOT_HOST/cacert.pem
     echo "$FULL_VERSION_STRING" >$OVERLAY/usr/bootme/ID
@@ -335,7 +335,7 @@ password of the default $PLC_NAME Central administrator account at the
 time that this CD was created.
 
 EOF
-    
+
     # Set root password
     echo "* Setting root password"
 
@@ -358,7 +358,7 @@ EOF
 # have been nice to be able to enter sshd very early on - before bm has even been downloaded
 # however somehow it appears that these lines ruin all chances to enter ssh at all
 # either early or even later on;
-# plus, it is unclear what this would give on non=systemd nodes, so I am backing off for now    
+# plus, it is unclear what this would give on non=systemd nodes, so I am backing off for now
 #    # recent bootCDs rely on a standard systemd startup sequence
 #    # so allow debug key to enter in this context whenever that makes sense
 #    mkdir -p $OVERLAY/root/.ssh
@@ -377,7 +377,6 @@ EOF
 
     [ -n "$IS_SERIAL" ] && KERNEL_ARGS="$KERNEL_ARGS ${console_spec}"
 
-    # tmp: should be restricted to f15 nodes and above
     # making sure the network interfaces are still numbered eth0 and above
     KERNEL_ARGS="$KERNEL_ARGS biosdevname=0"
     # this apparently is required instead (or in addition to) starting with f29
@@ -472,7 +471,7 @@ EOF
     ### COPIED FROM build_usb() below!!!!
     echo -n " populating USB image... "
     mcopy -bsQ -i "$usb" "$ISOFS"/* z:/
-        
+
     # Use syslinux instead of isolinux to make the image bootable
     tmp="${BUILDTMP}/syslinux.cfg"
     cat >$tmp <<EOF
@@ -540,7 +539,7 @@ EOF
 #################### utility to setup CRAMFS related support
 function prepare_cramfs() {
     [ -n "$CRAMFS_PREPARED" ] && return 0
-    local custom=$1; 
+    local custom=$1;
 
     echo "* Setting up CRAMFS-based images"
     local tmp="${BUILDTMP}/cramfs-tree"
@@ -562,7 +561,7 @@ function prepare_cramfs() {
     # relocate various directory to /tmp
     rm -rf root
     ln -fs /tmp/root root
-    ln -fs /sbin/init linuxrc 
+    ln -fs /sbin/init linuxrc
     ln -fs /tmp/resolv.conf etc/resolv.conf
     ln -fs /tmp/etc/mtab etc/mtab
 
@@ -754,7 +753,7 @@ function build_types () {
     else
         serial=""
     fi
-    
+
     function type_to_name() {
         echo $1 | sed '
         s/usb$/.usb/;
@@ -778,11 +777,11 @@ function build_types () {
 
         echo "*** Dealing with type=$arg"
         echo '*' build_$t "$output" "$CUSTOM_DIR"
-        [ -n "$DRY_RUN" ] || build_$t "$output" "$CUSTOM_DIR" 
+        [ -n "$DRY_RUN" ] || build_$t "$output" "$CUSTOM_DIR"
     done
 }
 
-#################### 
+####################
 function main () {
 
     parse_command_line "$@"
