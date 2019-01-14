@@ -2,8 +2,8 @@
 %define nodefamily %{pldistro}-%{distroname}-%{_arch}
 
 %define name bootcd-%{nodefamily}
-%define version 5.4
-%define taglevel 1
+%define version 6.0
+%define taglevel 0
 
 # pldistro already in the rpm name
 %define release %{taglevel}%{?date:.%{date}}
@@ -117,6 +117,12 @@ rm -rf $RPM_BUILD_ROOT
 /etc/plc.d
 
 %changelog
+* Mon Jan 07 2019 Thierry <Parmentelat> - bootcd-6.0-0
+- requires 'genisoimage' rather than deprecated 'mkisofs'
+- set kernel arg `net.ifnames=0` in addition to `biosdevname=0`
+- does not use ifconfig, instead use ip and nm-ifup, or look up /sys/class/net
+- slightly review the contents of forensics messages
+
 * Sun Jul 10 2016 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.4-1
 - use 8.8.8.8 s a DNS server if nothing else works
 - more consistent and verbose forensics system

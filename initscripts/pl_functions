@@ -36,7 +36,6 @@ function verbose-file-uncommented-patterns () {
 function verbose-forensics () {
     message="$1"; shift
     verbose-message "BEG FORENSICS -- $message"
-    verbose-run dmesg
     verbose-run lsmod
     verbose-run lspci
 

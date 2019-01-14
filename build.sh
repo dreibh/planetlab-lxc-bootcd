@@ -73,10 +73,10 @@ for x in iso usb usb_partition; do for c in "" "_cramfs" ; do
   t="${x}${c}"
   case $t in
       usb_partition_cramfs)
-	  # unsupported
-	  ;;
+          # unsupported
+          ;;
       *)
-	  ALL_TYPES="$ALL_TYPES $t" ;;
+          ALL_TYPES="$ALL_TYPES $t" ;;
   esac
 done; done
 
@@ -106,14 +106,14 @@ function init_and_check () {
     # we disable the initial logic that called prep.sh if that was not the case
     # this is because prep.sh needs to know pldistro
     if [ ! -f $ISOREF/isofs/bootcd.img -o ! -f $ISOREF/version.txt ] ; then
-	echo "Could not find isofs and version.txt in $ISOREF"
-	if [ "$VARIANT" == "build" ] ; then
-	    echo "You have to run prep.sh prior to calling $COMMAND"
-	else
-	    echo "You need to create your variant image, see kvariant.sh"
-	fi
-	echo "Exiting .."
-	exit 1
+        echo "Could not find isofs and version.txt in $ISOREF"
+        if [ "$VARIANT" == "build" ] ; then
+            echo "You have to run prep.sh prior to calling $COMMAND"
+        else
+            echo "You need to create your variant image, see kvariant.sh"
+        fi
+        echo "Exiting .."
+        exit 1
     fi
 
     # build/version.txt written by prep.sh
@@ -121,7 +121,7 @@ function init_and_check () {
 
     if [ -f /etc/planetlab/plc_config ] ; then
         # Source PLC configuration
-	. /etc/planetlab/plc_config
+        . /etc/planetlab/plc_config
     fi
 
     # use /var/tmp that should be large enough on both chroot- or vserver-based myplc
@@ -170,20 +170,20 @@ function parse_command_line () {
     TYPES=""
     # Get options
     while getopts "f:t:as:SO:o:C:V:k:nh" opt ; do
-	case $opt in
-	    f) NODE_CONFIGURATION_FILE=$OPTARG ;;
-	    t) TYPES="$TYPES $OPTARG" ;;
-	    a) TYPES="$ALL_TYPES" ;;
-	    s) CONSOLE_INFO="$OPTARG" ;;
-	    S) CONSOLE_INFO=$SERIAL_CONSOLE ;;
-	    O) OUTPUT_BASE="$OPTARG" ;;
-	    o) OUTPUT_NAME="$OPTARG" ;;
-	    C) CUSTOM_DIR="$OPTARG" ;;
-	    V) VARIANT="$OPTARG" ;;
-	    k) KERNEL_ARGS="$KERNEL_ARGS $OPTARG" ;;
-	    n) DRY_RUN=true ;;
-	    h|*) usage ;;
-	esac
+        case $opt in
+            f) NODE_CONFIGURATION_FILE=$OPTARG ;;
+            t) TYPES="$TYPES $OPTARG" ;;
+            a) TYPES="$ALL_TYPES" ;;
+            s) CONSOLE_INFO="$OPTARG" ;;
+            S) CONSOLE_INFO=$SERIAL_CONSOLE ;;
+            O) OUTPUT_BASE="$OPTARG" ;;
+            o) OUTPUT_NAME="$OPTARG" ;;
+            C) CUSTOM_DIR="$OPTARG" ;;
+            V) VARIANT="$OPTARG" ;;
+            k) KERNEL_ARGS="$KERNEL_ARGS $OPTARG" ;;
+            n) DRY_RUN=true ;;
+            h|*) usage ;;
+        esac
     done
 
     # use defaults if not set
@@ -193,25 +193,25 @@ function parse_command_line () {
 
     if [ -n "$NODE_CONFIGURATION_FILE" ] ; then
     # check existence of NODE_CONFIGURATION_FILE and normalize as we will change directory
-	if [ ! -f "$NODE_CONFIGURATION_FILE" ] ; then
-	    echo "Node configuration file $NODE_CONFIGURATION_FILE not found - exiting"
-	    exit 1
-	fi
-	cf_dir="$(dirname $NODE_CONFIGURATION_FILE)"
-	cf_dir="$(cd $cf_dir; pwd -P)"
-	cf_file="$(basename $NODE_CONFIGURATION_FILE)"
-	NODE_CONFIGURATION_FILE="$cf_dir"/"$cf_file"
+        if [ ! -f "$NODE_CONFIGURATION_FILE" ] ; then
+            echo "Node configuration file $NODE_CONFIGURATION_FILE not found - exiting"
+            exit 1
+        fi
+        cf_dir="$(dirname $NODE_CONFIGURATION_FILE)"
+        cf_dir="$(cd $cf_dir; pwd -P)"
+        cf_file="$(basename $NODE_CONFIGURATION_FILE)"
+        NODE_CONFIGURATION_FILE="$cf_dir"/"$cf_file"
     fi
 
     # check TYPES
     local matcher="XXX$(echo $ALL_TYPES | sed -e 's,\W,XXX,g')XXX"
     for t in $TYPES; do
-	echo Checking type $t
-	echo $matcher | grep XXX${t}XXX &> /dev/null
-	if [ "$?" != 0 ] ; then
-	    echo Unknown type $t
-	    usage
-	fi
+        echo Checking type $t
+        echo $matcher | grep XXX${t}XXX &> /dev/null
+        if [ "$?" != 0 ] ; then
+            echo Unknown type $t
+            usage
+        fi
     done
 
 }
@@ -220,24 +220,24 @@ function parse_command_line () {
 function init_serial () {
     local console=$1; shift
     if [ "$console" == "$GRAPHIC_CONSOLE" ] ; then
-	IS_SERIAL=
-	console_spec=""
-	echo "Standard, graphic, non-serial mode"
+        IS_SERIAL=
+        console_spec=""
+        echo "Standard, graphic, non-serial mode"
     else
-	IS_SERIAL=true
-	console_dev=$(echo "$console" | awk -F: ' {print $1}')
-	console_baud=$(echo "$console" | awk -F: ' {print $2}')
-	[ -z "$console_baud" ] && console_baud="115200"
-	local console_parity=$(echo "$console" | awk -F: ' {print $3}')
-	[ -z "$console_parity" ] && console_parity="n"
-	local console_bits=$(echo "$console" | awk -F: ' {print $4}')
-	[ -z "$console_bits" ] && console_bits="8"
-	console_spec="console=${console_dev},${console_baud}${console_parity}${console_bits}"
-	local tty_nb=$(echo $console_dev | sed -e 's,[a-zA-Z],,g')
-	console_serial_line="SERIAL ${tty_nb} ${console_baud}"
-	echo "Serial mode"
-	echo "console_serial_line=${console_serial_line}"
-	echo "console_spec=${console_spec}"
+        IS_SERIAL=true
+        console_dev=$(echo "$console" | awk -F: ' {print $1}')
+        console_baud=$(echo "$console" | awk -F: ' {print $2}')
+        [ -z "$console_baud" ] && console_baud="115200"
+        local console_parity=$(echo "$console" | awk -F: ' {print $3}')
+        [ -z "$console_parity" ] && console_parity="n"
+        local console_bits=$(echo "$console" | awk -F: ' {print $4}')
+        [ -z "$console_bits" ] && console_bits="8"
+        console_spec="console=${console_dev},${console_baud}${console_parity}${console_bits}"
+        local tty_nb=$(echo $console_dev | sed -e 's,[a-zA-Z],,g')
+        console_serial_line="SERIAL ${tty_nb} ${console_baud}"
+        echo "Serial mode"
+        echo "console_serial_line=${console_serial_line}"
+        echo "console_spec=${console_spec}"
     fi
 }
 
@@ -251,7 +251,7 @@ function build_overlay () {
     ISOFS="${BUILDTMP}/isofs"
     mkdir -p "$ISOFS"
     for i in "$ISOREF"/isofs/{bootcd.img,kernel}; do
-	ln -s "$i" "$ISOFS"
+        ln -s "$i" "$ISOFS"
     done
     # use new location as of fedora 12
     # used to be in /usr/lib/syslinux/isolinux.bin
@@ -264,7 +264,7 @@ function build_overlay () {
     # (*) memdisk that is not useful
     isolinuxfiles="isolinux.bin ldlinux.c32"
     for isolinuxfile in $isolinuxfiles; do
-	[ -f $isolinuxdir/$isolinuxfile ] && cp $isolinuxdir/$isolinuxfile "${BUILDTMP}/isofs"
+        [ -f $isolinuxdir/$isolinuxfile ] && cp $isolinuxdir/$isolinuxfile "${BUILDTMP}/isofs"
     done
 
     # ##### NorNet ########################
@@ -294,8 +294,8 @@ function build_overlay () {
     # the right CD is mounted. We used to boot from an initrd and mount
     # the CD on /usr. Now we just run everything out of the initrd.
     for file in $OVERLAY/pl_version $OVERLAY/usr/isolinux/pl_version ; do
-	mkdir -p $(dirname $file)
-	echo "$FULL_VERSION_STRING" >$file
+        mkdir -p $(dirname $file)
+        echo "$FULL_VERSION_STRING" >$file
     done
 
     # Install boot server configuration files
@@ -305,11 +305,11 @@ function build_overlay () {
     # but never got around to it. Just install the same parameters for
     # both for now.
     for dir in $OVERLAY/usr/boot $OVERLAY/usr/boot/backup ; do
-	install -D -m 644 $PLC_BOOT_CA_SSL_CRT $dir/cacert.pem
-	install -D -m 644 $PLC_ROOT_GPG_KEY_PUB $dir/pubring.gpg
-	echo "$PLC_BOOT_HOST" >$dir/boot_server
-	echo "$PLC_BOOT_SSL_PORT" >$dir/boot_server_port
-	echo "/boot/" >$dir/boot_server_path
+        install -D -m 644 $PLC_BOOT_CA_SSL_CRT $dir/cacert.pem
+        install -D -m 644 $PLC_ROOT_GPG_KEY_PUB $dir/pubring.gpg
+        echo "$PLC_BOOT_HOST" >$dir/boot_server
+        echo "$PLC_BOOT_SSL_PORT" >$dir/boot_server_port
+        echo "/boot/" >$dir/boot_server_path
     done
 
     # Install old-style boot server configuration files
@@ -325,11 +325,11 @@ function build_overlay () {
     echo "* Generating /etc/issue"
 
     if [ "$PLC_WWW_PORT" = "443" ] ; then
-	PLC_WWW_URL="https://$PLC_WWW_HOST/"
+        PLC_WWW_URL="https://$PLC_WWW_HOST/"
     elif [ "$PLC_WWW_PORT" != "80" ] ; then
-	PLC_WWW_URL="http://$PLC_WWW_HOST:$PLC_WWW_PORT/"
+        PLC_WWW_URL="http://$PLC_WWW_HOST:$PLC_WWW_PORT/"
     else
-	PLC_WWW_URL="http://$PLC_WWW_HOST/"
+        PLC_WWW_URL="http://$PLC_WWW_HOST/"
     fi
 
     mkdir -p $OVERLAY/etc
@@ -356,7 +356,7 @@ EOF
     if [ -z "$ROOT_PASSWORD" ] ; then
         # Generate an encrypted password with crypt() if not defined
         # in a static configuration.
-	ROOT_PASSWORD=$(python <<EOF
+        ROOT_PASSWORD=$(python <<EOF
 import crypt, random, string
 salt = [random.choice(string.letters + string.digits + "./") for i in range(0,8)]
 print crypt.crypt('$PLC_ROOT_PASSWORD', '\$1\$' + "".join(salt) + '\$')
@@ -382,18 +382,19 @@ EOF
 
     # Install node configuration file (e.g., if node has no floppy disk or USB slot)
     if [ -f "$NODE_CONFIGURATION_FILE" ] ; then
-	echo "* Installing node configuration file $NODE_CONFIGURATION_FILE -> /usr/boot/plnode.txt of the bootcd image"
-	install -D -m 644 $NODE_CONFIGURATION_FILE $OVERLAY/usr/boot/plnode.txt
-	NODE_ID=$(source $NODE_CONFIGURATION_FILE; echo $NODE_ID)
-	echo "* Building network configuration for $NODE_ID"
-	plnet -- --root $OVERLAY --files-only --program BootCD $NODE_ID
+        echo "* Installing node configuration file $NODE_CONFIGURATION_FILE -> /usr/boot/plnode.txt of the bootcd image"
+        install -D -m 644 $NODE_CONFIGURATION_FILE $OVERLAY/usr/boot/plnode.txt
+        NODE_ID=$(source $NODE_CONFIGURATION_FILE; echo $NODE_ID)
+        echo "* Building network configuration for $NODE_ID"
+        plnet -- --root $OVERLAY --files-only --program BootCD $NODE_ID
     fi
 
     [ -n "$IS_SERIAL" ] && KERNEL_ARGS="$KERNEL_ARGS ${console_spec}"
 
-    # tmp: should be restricted to f15 nodes and above
     # making sure the network interfaces are still numbered eth0 and above
-    KERNEL_ARGS="$KERNEL_ARGS biosdevname=0 net.ifnames=0"
+    KERNEL_ARGS="$KERNEL_ARGS biosdevname=0"
+    # this apparently is required instead (or in addition to) starting with f29
+    KERNEL_ARGS="$KERNEL_ARGS net.ifnames=0"
     # making sure selinux is turned off - somehow this is needed with lxc/f14
     KERNEL_ARGS="$KERNEL_ARGS selinux=0"
     # add any debug flag if any (defined in the header of this script)
@@ -409,8 +410,8 @@ EOF
     pop_cleanup
 
     if [ -n "$CUSTOM_DIR" ]; then
-	echo "* Compressing custom image"
-	(cd "$CUSTOM_DIR" && find . | cpio --quiet -c -o) | gzip -9 >$ISOFS/custom.img
+        echo "* Compressing custom image"
+        (cd "$CUSTOM_DIR" && find . | cpio --quiet -c -o) | gzip -9 >$ISOFS/custom.img
     fi
 
     # Calculate ramdisk size (total uncompressed size of both archives)
@@ -656,15 +657,15 @@ EOF
 
     # update etc/inittab to start with pl_rsysinit
     for file in etc/inittab etc/event.d/rcS etc/init/rcS.conf; do
-	[ -f $file ] && sed -i 's,pl_sysinit,pl_rsysinit,' $file
+        [ -f $file ] && sed -i 's,pl_sysinit,pl_rsysinit,' $file
     done
 
     # modify inittab to have a serial console
     # xxx this might well be broken with f12 and above xxx
     if [ -n "$serial" ] ; then
-	echo "T0:23:respawn:/sbin/agetty -L $console_dev $console_baud vt100" >> etc/inittab
+        echo "T0:23:respawn:/sbin/agetty -L $console_dev $console_baud vt100" >> etc/inittab
         # and let root log in
-	echo "$console_dev" >> etc/securetty
+        echo "$console_dev" >> etc/securetty
     fi
 
     # calculate the size of /tmp based on the size of /etc & /var + 8MB slack
@@ -796,17 +797,17 @@ function build_types () {
 
     # alter output filename to reflect serial settings
     if [ -n "$IS_SERIAL" ] ; then
-	if [ "$CONSOLE_INFO" == "$SERIAL_CONSOLE" ] ; then
-	    serial="-serial"
-	else
-	    serial="-serial-$(echo $CONSOLE_INFO | sed -e 's,:,,g')"
-	fi
+        if [ "$CONSOLE_INFO" == "$SERIAL_CONSOLE" ] ; then
+            serial="-serial"
+        else
+            serial="-serial-$(echo $CONSOLE_INFO | sed -e 's,:,,g')"
+        fi
     else
-	serial=""
+        serial=""
     fi
 
     function type_to_name() {
-	echo $1 | sed '
+        echo $1 | sed '
         s/usb$/.usb/;
         s/usb_partition$/-partition.usb/;
         s/iso$/.iso/;
@@ -816,19 +817,19 @@ function build_types () {
     }
 
     for t in $TYPES; do
-	arg=$t
+        arg=$t
 
-	tname=`type_to_name $t`
+        tname=`type_to_name $t`
         # if -o is specified (as it has no default)
-	if [ -n "$OUTPUT_NAME" ] ; then
-	    output=$OUTPUT_NAME
-	else
-	    output="${OUTPUT_BASE}${serial}${tname}"
-	fi
+        if [ -n "$OUTPUT_NAME" ] ; then
+            output=$OUTPUT_NAME
+        else
+            output="${OUTPUT_BASE}${serial}${tname}"
+        fi
 
-	echo "*** Dealing with type=$arg"
-	echo '*' build_$t "$output" "$CUSTOM_DIR"
-	[ -n "$DRY_RUN" ] || build_$t "$output" "$CUSTOM_DIR"
+        echo "*** Dealing with type=$arg"
+        echo '*' build_$t "$output" "$CUSTOM_DIR"
+        [ -n "$DRY_RUN" ] || build_$t "$output" "$CUSTOM_DIR"
     done
 }
 

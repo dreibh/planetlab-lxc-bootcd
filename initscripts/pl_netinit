@@ -1,7 +1,9 @@
 #!/bin/bash
 #-*-shell-script-*-
 
-set -x
+# set -x
+
+source /etc/init.d/pl_functions
 
 # the name of the floppy based network configuration
 # files (checked first). the name planet.cnf is kept
@@ -295,7 +297,8 @@ done
 
 # actually check to make sure ifconfig <device> succeeds
 
-/usr/libexec/nm-ifup $ETH_DEVICE >& /dev/null || {
+verbose-message Initializing $ETH_DEVICE
+/usr/libexec/nm-ifup $ETH_DEVICE || /sbin/ifconfig $ETH_DEVICE up || {
     verbose-message "pl_netinit: device $ETH_DEVICE does not exist, most likely"
     verbose-message "pl_netinit: this CD does not have hardware support for your"
     verbose-message "pl_netinit: network adapter. please send the following lines"
@@ -303,11 +306,11 @@ done
     net-init-failed
 }
 
-verbose-message "pl_netinit: attempting to start networking"
-/sbin/service network start
-
-# for backwards compatibility
-/sbin/ifconfig $ETH_DEVICE > $IFCONFIG_OUTPUT
+# my understanding is this is used to upload to MyPLC
+# details like mac addresses and the like
+# for backwards compatibility, in a best-effort manner,
+# we try and compensate for the disappearance of ifconfig
+( /sbin/ifconfig $ETH_DEVICE || ip address show $ETH_DEVICE ) > $IFCONFIG_OUTPUT
 
 verbose-message "pl_netinit: network online"
 
