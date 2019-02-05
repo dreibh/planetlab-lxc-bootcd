@@ -50,7 +50,7 @@ AutoReqProv: no
 The Boot CD securely boots PlanetLab nodes into an immutable
 environment. This package is designed to be installed on a MyPLC
 installation and provide the basics for the PLC to able to compute
-BootCDs for its attached nodes.
+BootCDs for its attached nodes. 
 See http://svn.planet-lab.org/wiki/NodeFamily
 
 
@@ -99,12 +99,12 @@ tar cpf - \
     configurations | \
     tar -C $RPM_BUILD_ROOT/%{_datadir}/%{name}/ -xpf -
 
-for script in bootcd bootcd-kernel; do
+for script in bootcd bootcd-kernel; do 
     install -D -m 755 plc.d/$script $RPM_BUILD_ROOT/etc/plc.d/$script
 done
 
 popd
-
+    
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -126,9 +126,6 @@ rm -rf $RPM_BUILD_ROOT
 * Sun Jul 10 2016 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.4-1
 - use 8.8.8.8 s a DNS server if nothing else works
 - more consistent and verbose forensics system
-
-* Fri Mar 18 2016 Thomas Dreibholz
-- net.ifnames=0 to get eth0 (not enp0s2, etc.) under Fedora 23.
 
 * Tue Dec 08 2015 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - bootcd-5.3-3
 - patch for f23 as of dec. 2015 where kernel and initrd show up in
@@ -280,7 +277,7 @@ rm -rf $RPM_BUILD_ROOT
 
 * Wed Apr 23 2008 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - BootCD-4.2-1
 - new name for the rpm, to allow simultaneous rpm-installs for several nodefamily (pldistro+arch)
-- now installs in /usr/share/bootcd-<nodefamily> with a legacy symlink (requires MyPLC-4.2-7)
+- now installs in /usr/share/bootcd-<nodefamily> with a legacy symlink (requires MyPLC-4.2-7) 
 - nodefamily exported under bootcd.img in /etc/nodefamily (for bm) and under build/nodefamily (for build.sh)
 
 * Wed Mar 26 2008 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - BootCD-3.4-4 BootCD-3.4-5
@@ -299,10 +296,10 @@ rm -rf $RPM_BUILD_ROOT
 - support for creating a usb partition
 - removed obsolete files newbuild.sh, bootcustom.sh and cdcustom.sh
 
-* Mon Jan 29 2006 Marc E. Fiuczynski <mef@cs.princeton.edu> -
+* Mon Jan 29 2006 Marc E. Fiuczynski <mef@cs.princeton.edu> - 
 - added biginitrd usb image
 
-* Fri Sep  2 2005 Mark Huang <mlhuang@cotton.CS.Princeton.EDU> -
+* Fri Sep  2 2005 Mark Huang <mlhuang@cotton.CS.Princeton.EDU> - 
 - Initial build.
 
 %define module_current_branch 4.2
