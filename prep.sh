@@ -126,11 +126,12 @@ isofs=$PWD/build/isofs
 install -d -m 755 $isofs
 
 # Copy the kernel out
+echo "* BootCD - locating kernel"
 for kernel in $bootcd/boot/vmlinuz-* ; do
     if [ -f $kernel ] ; then
-	install -D -m 644 $kernel $isofs/kernel
-	echo "* BootCD kernel (1) created from $kernel"
-	echo "* kernel created (1) from $kernel" > $isofs/kernel.from
+        echo "* BootCD kernel (1) creating from $kernel"
+        echo "* kernel created (1) from $kernel" > $isofs/kernel.from
+        install -D -m 644 $kernel $isofs/kernel
     fi
 done
 
@@ -160,9 +161,9 @@ done
 if [ ! -f $isofs/kernel ] ; then
     kernel=$(find $bootcd/boot -name linux)
     if [ -f $kernel ] ; then
-	install -D -m 644 $kernel $isofs/kernel
-	echo "* BootCD kernel (2) created from $kernel"
-	echo "* kernel created (2) from $kernel" > $isofs/kernel.from
+        echo "* BootCD kernel (2) creating from $kernel"
+        echo "* kernel created (2) from $kernel" > $isofs/kernel.from
+        install -D -m 644 $kernel $isofs/kernel
     fi
 fi
 
