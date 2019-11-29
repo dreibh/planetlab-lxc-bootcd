@@ -128,7 +128,7 @@ install -d -m 755 $isofs
 # Copy the kernel out
 echo "* BootCD - locating kernel"
 for kernel in $bootcd/boot/vmlinuz-* ; do
-    if [ -f $kernel ] ; then
+    if [ -f "$kernel" ] ; then
         echo "* BootCD kernel (1) creating from $kernel"
         echo "* kernel created (1) from $kernel" > $isofs/kernel.from
         install -D -m 644 $kernel $isofs/kernel
@@ -160,7 +160,7 @@ done
 # second chance if first approach would not work
 if [ ! -f $isofs/kernel ] ; then
     kernel=$(find $bootcd/boot -name linux)
-    if [ -f $kernel ] ; then
+    if [ -f "$kernel" ] ; then
         echo "* BootCD kernel (2) creating from $kernel"
         echo "* kernel created (2) from $kernel" > $isofs/kernel.from
         install -D -m 644 $kernel $isofs/kernel
