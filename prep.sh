@@ -51,7 +51,7 @@ pl_root_mkfedora $bootcd $pldistro $pkgsfile
 pl_root_tune_image $bootcd
 
 # Add site_admin console account to BootCD: with root priv, and self passwd
-CRYPT_SA_PASSWORD=$(python -c "import crypt, random, string; salt = [random.choice(string.letters + string.digits + \"./\") for i in range(0,8)] ; print crypt.crypt('site_admin', '\$1\$' + \"\".join(salt) + '\$')")
+CRYPT_SA_PASSWORD=$(python3 -c "import crypt, random, string; salt = [random.choice(string.ascii_letters + string.digits + \"./\") for i in range(0,8)] ; print(crypt.crypt('site_admin', '\$1\$' + \"\".join(salt) + '\$'))")
 chroot ${bootcd} /usr/sbin/useradd -p "$CRYPT_SA_PASSWORD" -o -g 0 -u 0 -m site_admin
 
 # Install ipnmac (for SuperMicro machines with IPMI)
@@ -126,11 +126,12 @@ isofs=$PWD/build/isofs
 install -d -m 755 $isofs
 
 # Copy the kernel out
+echo "* BootCD - locating kernel"
 for kernel in $bootcd/boot/vmlinuz-* ; do
-    if [ -f $kernel ] ; then
-	install -D -m 644 $kernel $isofs/kernel
-	echo "* BootCD kernel (1) created from $kernel"
-	echo "* kernel created (1) from $kernel" > $isofs/kernel.from
+    if [ -f "$kernel" ] ; then
+        echo "* BootCD kernel (1) creating from $kernel"
+        echo "* kernel created (1) from $kernel" > $isofs/kernel.from
+        install -D -m 644 $kernel $isofs/kernel
     fi
 done
 
@@ -159,10 +160,10 @@ done
 # second chance if first approach would not work
 if [ ! -f $isofs/kernel ] ; then
     kernel=$(find $bootcd/boot -name linux)
-    if [ -f $kernel ] ; then
-	install -D -m 644 $kernel $isofs/kernel
-	echo "* BootCD kernel (2) created from $kernel"
-	echo "* kernel created (2) from $kernel" > $isofs/kernel.from
+    if [ -f "$kernel" ] ; then
+        echo "* BootCD kernel (2) creating from $kernel"
+        echo "* kernel created (2) from $kernel" > $isofs/kernel.from
+        install -D -m 644 $kernel $isofs/kernel
     fi
 fi
 
