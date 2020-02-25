@@ -48,7 +48,11 @@ echo "* Creating fedora root image"
 pl_root_makedevs $bootcd
 pkgsfile=$(pl_locateDistroFile ../build/ $pldistro bootcd.pkgs) 
 pl_root_mkfedora $bootcd $pldistro $pkgsfile
+echo "** DBG1 - contents of /boot after mkfedora"
+ls -R $bootcd/boot
 pl_root_tune_image $bootcd
+echo "** DBG2 - contents of /boot after tune_image"
+ls -R $bootcd/boot
 
 # Add site_admin console account to BootCD: with root priv, and self passwd
 echo "* Creating site_admin account"
