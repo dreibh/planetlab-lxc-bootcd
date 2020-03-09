@@ -356,16 +356,15 @@ EOF
     if [ -z "$ROOT_PASSWORD" ] ; then
         # Generate an encrypted password with crypt() if not defined
         # in a static configuration.
-        ROOT_PASSWORD=$(python <<EOF
-import crypt, random, string
-salt = [random.choice(string.letters + string.digits + "./") for i in range(0,8)]
-print crypt.crypt('$PLC_ROOT_PASSWORD', '\$1\$' + "".join(salt) + '\$')
+        ROOT_PASSWORD=$(python3 << EOF
+import crypt
+print(crypt.crypt('$PLC_ROOT_PASSWORD', crypt.METHOD_SHA256))
 EOF
 )
     fi
 
     # build/passwd copied out by prep.sh
-    sed -e "s@^root:[^:]*:\(.*\)@root:$ROOT_PASSWORD:\1@" ${VARIANT}/passwd >$OVERLAY/etc/passwd
+    sed -e "s@^root:[^:]*:\(.*\)@root:$ROOT_PASSWORD:\1@" ${VARIANT}/passwd > $OVERLAY/etc/passwd
 
 # this is more harmful than helpful
 # idea being, since we start a full-featured fedora system now, it would

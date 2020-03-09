@@ -48,9 +48,14 @@ echo "* Creating fedora root image"
 pl_root_makedevs $bootcd
 pkgsfile=$(pl_locateDistroFile ../build/ $pldistro bootcd.pkgs) 
 pl_root_mkfedora $bootcd $pldistro $pkgsfile
+echo "** DBG1 - contents of /boot after mkfedora"
+ls -R $bootcd/boot
 pl_root_tune_image $bootcd
+echo "** DBG2 - contents of /boot after tune_image"
+ls -R $bootcd/boot
 
 # Add site_admin console account to BootCD: with root priv, and self passwd
+echo "* Creating site_admin account"
 CRYPT_SA_PASSWORD=$(python3 -c "import crypt, random, string; salt = [random.choice(string.ascii_letters + string.digits + \"./\") for i in range(0,8)] ; print(crypt.crypt('site_admin', '\$1\$' + \"\".join(salt) + '\$'))")
 chroot ${bootcd} /usr/sbin/useradd -p "$CRYPT_SA_PASSWORD" -o -g 0 -u 0 -m site_admin
 
